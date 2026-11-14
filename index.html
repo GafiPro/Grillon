@@ -148,6 +148,34 @@
           <div class="career-stat"><span>RESPOSTAS 80+ PONTOS</span><strong id="stat-rare">0</strong></div>
         </div>
       </section>
+
+      <section class="library-panel" aria-label="Editor de perguntas e cópias de segurança">
+        <div class="library-heading">
+          <div><span class="section-eyebrow">OFICINA DO GRILLON</span><h3>O teu banco de perguntas</h3><p>Cria categorias, acrescenta respostas e guarda uma cópia dos teus dados.</p></div>
+          <span class="library-private">SÓ NESTE DISPOSITIVO</span>
+        </div>
+        <div class="backup-actions">
+          <button class="button button-secondary" id="export-data-button" type="button">EXPORTAR CÓPIA <span aria-hidden="true">↓</span></button>
+          <button class="button button-secondary" id="import-data-button" type="button">IMPORTAR CÓPIA <span aria-hidden="true">↑</span></button>
+          <input id="import-data-file" type="file" accept="application/json,.json" hidden>
+        </div>
+        <form id="custom-question-form" class="question-editor" autocomplete="off">
+          <div class="editor-form-heading"><strong>CRIAR UMA PERGUNTA</strong><span>APENAS NO TREINO LIVRE</span></div>
+          <div class="editor-grid">
+            <label class="editor-field"><span>NOME DA CATEGORIA</span><input id="editor-category" type="text" maxlength="38" placeholder="Ex.: Minecraft" required></label>
+            <label class="editor-field"><span>PERGUNTA</span><input id="editor-title" type="text" maxlength="110" placeholder="Ex.: Diz o nome de um mob." required></label>
+          </div>
+          <label class="editor-field"><span>DESCRIÇÃO / DICA (OPCIONAL)</span><input id="editor-subtitle" type="text" maxlength="180" placeholder="Ex.: Hostis, passivos ou neutros."></label>
+          <label class="editor-field"><span>RESPOSTAS ACEITES</span><textarea id="editor-answers" rows="6" maxlength="7000" placeholder="Creeper | 5&#10;Warden | 80&#10;Sniffer | 100 | farejador" required></textarea></label>
+          <p class="editor-help">Uma resposta por linha: <code>Resposta | pontos | alias1, alias2</code>. Os pontos permitidos são 5, 15, 30, 55, 80 e 100. Adiciona pelo menos duas respostas.</p>
+          <div class="editor-submit-row"><button class="button button-primary" type="submit">GUARDAR PERGUNTA <span aria-hidden="true">＋</span></button><span id="editor-feedback" role="status" aria-live="polite"></span></div>
+        </form>
+        <div class="custom-question-list-wrap">
+          <div class="custom-list-heading"><strong>AS TUAS CATEGORIAS</strong><span id="custom-question-count">0 perguntas</span></div>
+          <div id="custom-question-list" class="custom-question-list"><p class="empty-library">Ainda não criaste perguntas personalizadas.</p></div>
+        </div>
+      </section>
+
       <footer class="home-footer">
         <span>GRILLON <span class="brand-dot">·</span> FEITO PARA JOGAR</span>
         <span>O teu recorde fica guardado neste navegador.</span>
