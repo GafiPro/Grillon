@@ -599,7 +599,7 @@
         if (match) byId.set(Number(match[1]), entry);
       });
       const ids = uniqueStrings(POKEMON_IDS.map(String)).map(Number).filter((id) => byId.has(id));
-      const selected = shuffle(ids).slice(0, 36);
+      const selected = ids.slice(0, 36);
       pokemon = await mapLimit(selected, 6, async (id) => {
         return await fetchJson("https://pokeapi.co/api/v2/pokemon-species/" + id + "/", 12000);
       });
@@ -631,6 +631,7 @@
   function updateApiStatus(results) {
     const status = $("api-status");
     const text = $("api-status-text");
+    status.classList.remove("ready", "partial");
     const connected = results.filter((item) => item.ok).map((item) => item.name);
     const failed = results.filter((item) => !item.ok).map((item) => item.name);
     if (connected.length === 2) {
