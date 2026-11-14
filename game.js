@@ -3,9 +3,10 @@
 (function () {
   const POINTS = [5, 15, 30, 55, 80, 100];
   const TIER_NAMES = ["Comum", "Conhecida", "Incomum", "Rara", "Abissal", "Lendária"];
-  const ROUND_LENGTH = 7;
-  const ROUND_SECONDS = 25;
-  const BEST_KEY = "grillon.best.v1";
+  const DEFAULT_ROUND_LENGTH = 7;
+  const DEFAULT_ROUND_SECONDS = 25;
+  const BEST_KEY = "grillon.best.percent.v2";
+  const LEGACY_BEST_KEY = "grillon.best.v1";
   const CACHE_COUNTRIES = "grillon.countries.v1";
   const CACHE_POKEMON = "grillon.pokemon.v1";
 
@@ -128,7 +129,11 @@
   let currentQuestion = null;
   let currentResults = [];
   let totalScore = 0;
-  let remaining = ROUND_SECONDS;
+  let remaining = DEFAULT_ROUND_SECONDS;
+  let roundLength = DEFAULT_ROUND_LENGTH;
+  let roundSeconds = DEFAULT_ROUND_SECONDS;
+  let maxRoundScore = DEFAULT_ROUND_LENGTH * 100;
+  let categorySelection = null;
   let timerId = null;
   let locked = false;
   let toastTimer = null;
@@ -139,11 +144,14 @@
   }
 
   function normalise(value) {
-    return String(value || "")
+    const words = String(value || "")
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
-      .replace(/[^a-z0-9]/g, "");
+      .match(/[a-z0-9]+/g) || [];
+    const articles = new Set(["the", "a", "an", "o", "os", "as", "um", "uma", "uns", "umas", "el", "la", "los", "las"]);
+    if (words.length > 1 && articles.has(words[0])) words.shift();
+    return words.join("");
   }
 
   function tierName(points) {
@@ -285,8 +293,8 @@
         if (match) byId.set(Number(match[1]), entry);
       });
       const ids = uniqueStrings(POKEMON_IDS.map(String)).map(Number).filter((id) => byId.has(id));
-      const selected = shuffle(ids).slice(0, 52);
-      pokemon = await mapLimit(selected, 8, async (id) => {
+      const selected = shuffle(ids).slice(0, 36);
+      pokemon = await mapLimit(selected, 6, async (id) => {
         return await fetchJson("https://pokeapi.co/api/v2/pokemon-species/" + id + "/", 12000);
       });
       writeCache(CACHE_POKEMON, pokemon);
@@ -343,27 +351,97 @@
       }).catch(() => ({ ok: false, name: "PokéAPI" }))
     ]);
     updateApiStatus(results);
+    renderCategoryOptions();
+    updateSetupSummary();
   }
 
-  function getBestScore() {
-    try { return Number(localStorage.getItem(BEST_KEY)) || 0; } catch (_) { return 0; }
+  function getEligibleQuestions() {
+    if (categorySelection === null) return questionPool.slice();
+    return questionPool.filter((question) => categorySelection.has(question.id));
+  }
+
+  function renderCategoryOptions() {
+    const container = $("category-options");
+    if (!container) return;
+    container.replaceChildren();
+    questionPool.slice().sort((a, b) => a.category.localeCompare(b.category, "pt-PT")).forEach((question) => {
+      const label = document.createElement("label");
+      label.className = "category-option";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.value = question.id;
+      checkbox.checked = categorySelection === null || categorySelection.has(question.id);
+      checkbox.addEventListener("change", () => {
+        if (categorySelection === null) categorySelection = new Set(questionPool.map((item) => item.id));
+        if (checkbox.checked) categorySelection.add(question.id);
+        else categorySelection.delete(question.id);
+        if (categorySelection.size >= questionPool.length) categorySelection = null;
+        renderCategoryOptions();
+        updateSetupSummary();
+      });
+      const name = document.createElement("span");
+      name.textContent = question.category;
+      label.append(checkbox, name);
+      container.append(label);
+    });
+    $("selected-category-count").textContent = getEligibleQuestions().length + "/" + questionPool.length;
+  }
+
+  function updateSetupSummary() {
+    const selected = getEligibleQuestions();
+    const requested = Number($("round-length").value) || DEFAULT_ROUND_LENGTH;
+    const time = Number($("round-time").value) || DEFAULT_ROUND_SECONDS;
+    const actual = Math.min(requested, selected.length);
+    $("mission-question-count").textContent = String(actual).padStart(2, "0");
+    $("mission-time-count").textContent = String(time);
+    $("mission-max-score").textContent = String(actual * 100);
+    const hint = $("setup-hint");
+    hint.classList.toggle("warning", selected.length > 0 && selected.length < requested);
+    if (selected.length === 0) {
+      hint.textContent = "Seleciona pelo menos um tema para começares a jogar.";
+    } else if (selected.length < requested) {
+      hint.textContent = "Selecionaste " + selected.length + " temas. Esta ronda terá " + selected.length + " perguntas para não repetir categorias.";
+    } else {
+      hint.textContent = "Serão escolhidos " + requested + " temas diferentes, com " + time + " segundos por resposta.";
+    }
+  }
+
+  function getBestPercent() {
+    try {
+      const saved = localStorage.getItem(BEST_KEY);
+      if (saved !== null) return Math.max(0, Math.min(100, Number(saved) || 0));
+      const legacyScore = Number(localStorage.getItem(LEGACY_BEST_KEY)) || 0;
+      const migrated = Math.round((legacyScore / 700) * 100);
+      if (migrated > 0) localStorage.setItem(BEST_KEY, String(migrated));
+      return migrated;
+    } catch (_) { return 0; }
   }
 
   function updateBestScore() {
-    $("best-score").innerHTML = getBestScore() + " <small>/ 700</small>";
+    $("best-score").innerHTML = getBestPercent() + "<small>%</small>";
   }
 
   function startGame() {
     window.clearInterval(timerId);
-    activeQuestions = shuffle(questionPool).slice(0, ROUND_LENGTH);
-    if (activeQuestions.length < ROUND_LENGTH) {
-      activeQuestions = shuffle(BUILTIN_QUESTIONS).slice(0, ROUND_LENGTH);
+    roundLength = Number($("round-length").value) || DEFAULT_ROUND_LENGTH;
+    roundSeconds = Number($("round-time").value) || DEFAULT_ROUND_SECONDS;
+    const eligibleQuestions = getEligibleQuestions();
+    if (eligibleQuestions.length === 0) {
+      showToast("Seleciona pelo menos um tema.");
+      return;
     }
+    activeQuestions = shuffle(eligibleQuestions).slice(0, roundLength);
+    if (activeQuestions.length < roundLength) {
+      showToast("Esta ronda terá " + activeQuestions.length + " perguntas, uma por cada tema selecionado.");
+    }
+    maxRoundScore = activeQuestions.length * 100;
     currentIndex = 0;
     currentResults = [];
     totalScore = 0;
     locked = false;
     $("live-score").textContent = "0";
+    $("question-total").textContent = String(activeQuestions.length).padStart(2, "0");
+    $("question-total-label").textContent = String(activeQuestions.length).padStart(2, "0");
     showScreen("game");
     renderQuestion();
   }
@@ -372,10 +450,10 @@
     window.clearInterval(timerId);
     currentQuestion = activeQuestions[currentIndex];
     locked = false;
-    remaining = ROUND_SECONDS;
+    remaining = roundSeconds;
     $("question-number").textContent = String(currentIndex + 1).padStart(2, "0");
     $("question-index").textContent = String(currentIndex + 1).padStart(2, "0");
-    $("progress-fill").style.width = (((currentIndex + 1) / ROUND_LENGTH) * 100) + "%";
+    $("progress-fill").style.width = (((currentIndex + 1) / activeQuestions.length) * 100) + "%";
     $("question-category").textContent = currentQuestion.category;
     $("question-title").textContent = currentQuestion.title;
     $("question-subtitle").textContent = currentQuestion.subtitle;
@@ -397,7 +475,7 @@
     if (locked) return;
     remaining -= 1;
     $("time-left").textContent = String(Math.max(remaining, 0));
-    $("timer-fill").style.width = Math.max(0, (remaining / ROUND_SECONDS) * 100) + "%";
+    $("timer-fill").style.width = Math.max(0, (remaining / roundSeconds) * 100) + "%";
     if (remaining <= 7) $("timer-fill").classList.add("warning");
     if (remaining <= 0) {
       window.clearInterval(timerId);
@@ -411,6 +489,45 @@
     return currentQuestion.answers.find((answer) =>
       answer.aliases.some((alias) => normalise(alias) === key)
     ) || null;
+  }
+
+  function editDistance(a, b) {
+    if (Math.abs(a.length - b.length) > 2 || a.length > 32 || b.length > 32) return 99;
+    const row = Array.from({ length: b.length + 1 }, (_, index) => index);
+    for (let i = 1; i <= a.length; i += 1) {
+      let diagonal = row[0];
+      row[0] = i;
+      for (let j = 1; j <= b.length; j += 1) {
+        const previous = row[j];
+        row[j] = Math.min(row[j] + 1, row[j - 1] + 1, diagonal + (a[i - 1] === b[j - 1] ? 0 : 1));
+        diagonal = previous;
+      }
+    }
+    return row[b.length];
+  }
+
+  function findClosestAnswer(value) {
+    const key = normalise(value);
+    if (key.length < 4) return null;
+    const threshold = key.length >= 10 ? 2 : 1;
+    let best = null;
+    let bestDistance = threshold + 1;
+    let ambiguous = false;
+    currentQuestion.answers.forEach((answer) => {
+      answer.aliases.forEach((alias) => {
+        const candidate = normalise(alias);
+        if (candidate === key || Math.abs(candidate.length - key.length) > threshold) return;
+        const distance = editDistance(key, candidate);
+        if (distance < bestDistance) {
+          best = answer;
+          bestDistance = distance;
+          ambiguous = false;
+        } else if (distance === bestDistance && best && best.name !== answer.name) {
+          ambiguous = true;
+        }
+      });
+    });
+    return ambiguous ? null : best;
   }
 
   function showFeedback(message, type) {
@@ -431,7 +548,9 @@
     }
     const answer = findAnswer(value);
     if (!answer) {
-      showFeedback("Ainda não reconhecemos essa resposta. Experimenta outra — o tempo continua a contar.", "error");
+      const closest = findClosestAnswer(value);
+      const suggestion = closest ? " Talvez quisesses escrever " + closest.name + "?" : "";
+      showFeedback("Ainda não reconhecemos essa resposta. Experimenta outra — o tempo continua a contar." + suggestion, "error");
       $("answer-input").select();
       return;
     }
@@ -468,7 +587,7 @@
 
   function continueGame() {
     if (!locked) return;
-    if (currentIndex + 1 >= ROUND_LENGTH) {
+    if (currentIndex + 1 >= activeQuestions.length) {
       finishGame();
       return;
     }
@@ -478,29 +597,33 @@
 
   function finishGame() {
     window.clearInterval(timerId);
-    const previousBest = getBestScore();
-    if (totalScore > previousBest) {
-      try { localStorage.setItem(BEST_KEY, String(totalScore)); } catch (_) {}
+    const percent = maxRoundScore > 0 ? Math.round((totalScore / maxRoundScore) * 100) : 0;
+    const previousBest = getBestPercent();
+    const newRecord = percent > previousBest;
+    if (newRecord) {
+      try { localStorage.setItem(BEST_KEY, String(percent)); } catch (_) {}
     }
     updateBestScore();
-    renderResults(totalScore > previousBest);
+    renderResults(newRecord, percent);
     showScreen("results");
   }
 
-  function resultMessage(score) {
-    if (score === 700) return ["Lenda do abismo.", "Sete respostas lendárias. É difícil fazer melhor do que isto."];
-    if (score >= 560) return ["Mergulho impressionante.", "Encontraste respostas que não aparecem à primeira na cabeça da maioria."];
-    if (score >= 400) return ["Boa exploração.", "Já sabes fugir ao óbvio. Ainda há mais profundidade para descobrir."];
-    if (score >= 250) return ["Bom começo.", "Tens algumas respostas interessantes. Na próxima ronda, arrisca um pouco mais."];
-    if (score > 0) return ["Ainda à superfície.", "O segredo está em pensar numa resposta válida menos previsível."];
+  function resultMessage(percent) {
+    if (percent === 100) return ["Lenda do abismo.", "Pontuação máxima. Respondeste sempre com opções do nível mais raro."];
+    if (percent >= 80) return ["Mergulho impressionante.", "Encontraste respostas invulgares e aproveitaste muito bem a ronda."];
+    if (percent >= 60) return ["Boa exploração.", "Já sabes fugir ao óbvio. Ainda há mais profundidade para descobrir."];
+    if (percent >= 35) return ["Bom começo.", "Tens algumas respostas interessantes. Na próxima ronda, arrisca um pouco mais."];
+    if (percent > 0) return ["Ainda à superfície.", "O segredo está em pensar numa resposta válida menos previsível."];
     return ["Mergulho em branco.", "A próxima ronda é uma nova oportunidade para encontrar respostas raras."];
   }
 
-  function renderResults(newRecord) {
+  function renderResults(newRecord, percent) {
     $("final-score").textContent = String(totalScore);
-    $("final-depth").textContent = (totalScore * 10).toLocaleString("pt-PT");
-    $("depth-meter-fill").style.width = (totalScore / 700 * 100) + "%";
-    const message = resultMessage(totalScore);
+    $("final-max-score").textContent = String(maxRoundScore);
+    $("final-depth").textContent = (percent * 70).toLocaleString("pt-PT");
+    $("depth-meter-fill").style.width = percent + "%";
+    $("review-count").textContent = String(activeQuestions.length).padStart(2, "0") + " PERGUNTAS";
+    const message = resultMessage(percent);
     $("result-title").textContent = message[0];
     $("result-description").textContent = message[1] + (newRecord ? " Novo recorde pessoal!" : "");
     $("result-date").textContent = new Date().toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
@@ -557,6 +680,18 @@
   }
 
   $("start-button").addEventListener("click", startGame);
+  $("round-length").addEventListener("change", updateSetupSummary);
+  $("round-time").addEventListener("change", updateSetupSummary);
+  $("toggle-categories").addEventListener("click", () => {
+    const container = $("category-options");
+    container.hidden = !container.hidden;
+    $("toggle-categories").setAttribute("aria-expanded", String(!container.hidden));
+  });
+  $("select-all-categories").addEventListener("click", () => {
+    categorySelection = null;
+    renderCategoryOptions();
+    updateSetupSummary();
+  });
   $("answer-form").addEventListener("submit", submitAnswer);
   $("skip-button").addEventListener("click", () => finishQuestion(null, "skip"));
   $("continue-button").addEventListener("click", continueGame);
@@ -574,6 +709,8 @@
     }
   });
 
+  renderCategoryOptions();
+  updateSetupSummary();
   updateBestScore();
   loadExternalQuestions();
 })();
