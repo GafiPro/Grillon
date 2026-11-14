@@ -1520,6 +1520,11 @@
     renderCategoryOptions();
     updateSetupSummary();
   });
+  $("custom-question-form").addEventListener("submit", saveQuestionFromEditor);
+  $("editor-cancel-button").addEventListener("click", resetQuestionEditor);
+  $("export-data-button").addEventListener("click", exportBackup);
+  $("import-data-button").addEventListener("click", () => $("import-data-file").click());
+  $("import-data-file").addEventListener("change", importBackup);
   $("answer-form").addEventListener("submit", submitAnswer);
   $("add-answer-button").addEventListener("click", () => {
     $("custom-answer-panel").hidden = false;
@@ -1546,8 +1551,10 @@
 
   loadSettings();
   loadCustomAnswers();
+  loadCustomQuestions();
   loadCareerStats();
   renderCategoryOptions();
+  renderCustomQuestionList();
   updateSetupSummary();
   updateBestScore();
   updateCareerStats();
