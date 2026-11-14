@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grillon browser smoke test</title>
+  <style>
+    body { margin: 0; font: 14px system-ui, sans-serif; background: #111820; color: #eef; }
+    #status { padding: 12px; }
+    iframe { display: block; width: 100%; height: 900px; border: 0; }
+  </style>
+</head>
+<body>
+  <pre id="status">A iniciar teste no navegador…</pre>
+  <iframe id="app" title="Grillon em teste"></iframe>
+  <script>
+    const statusNode = document.getElementById("status");
+    const frame = document.getElementById("app");
+
+    function assert(condition, message) {
+      if (!condition) throw new Error(message);
+    }
+
+    function waitFor(test, message, timeout = 12000) {
+      const start = Date.now();
+      return new Promise((resolve, reject) => {
+        const poll = () => {
+          try {
+            if (test()) return resolve();
+          } catch (_) {}
+          if (Date.now() - start > timeout) return reject(new Error("Tempo esgotado: " + message));
+          setTimeout(poll, 50);
+        };
+        poll();
+      });
+    }
+
+    async function run() {
+      const response = await fetch("../index.html");
+      assert(response.ok, "Não foi possível carregar index.html.");
+      let source = await response.text();
+      source = source.replace("<head>", '<head><base href="../">');
+
+      const bootstrap = [
+        "<script>",
+        "window.__smokeError = null;",
+        "window.addEventListener('error', event => { window.__smokeError = event.message || 'Erro JavaScript'; });",
+        "window.addEventListener('unhandledrejection', event => { window.__smokeError = String(event.reason || 'Promise rejeitada'); });",
+        "window.fetch = async function(url) {",
+        "  if (String(url).startsWith('https://restcountries.com/')) return { ok: true, json: async () => [",
+        "    { name: { common: 'Portugal', official: 'Portuguese Republic' }, population: 10000000, translations: { por: { common: 'Portugal', official: 'República Portuguesa' } }, cca3: 'PRT', altSpellings: ['PT'] },",
+        "    { name: { common: 'Nauru', official: 'Republic of Nauru' }, population: 12000, translations: { por: { common: 'Nauru', official: 'República de Nauru' } }, cca3: 'NRU', altSpellings: ['NR'] }",
+        "  ] };",
+        "  if (String(url).includes('pokemon-species?')) return { ok: true, json: async () => ({ results: [1, 4, 7, 25].map(id => ({ name: 'species-' + id, url: 'https://pokeapi.co/api/v2/pokemon-species/' + id + '/' })) }) };",
+        "  const match = String(url).match(/pokemon-species\\/(\\d+)\\/?$/);",
+        "  if (match) { const id = Number(match[1]); return { ok: true, json: async () => ({ name: 'species-' + id, names: [{ name: 'Espécie ' + id }], capture_rate: id + 20 }) }; }",
+        "  throw new Error('Pedido externo inesperado: ' + url);",
+        "};",
+        "<\\/script>",
+        '<script src="./game.js" defer><\\/script>'
+      ].join("");
+
+      assert(source.includes('<script src="./game.js" defer></script>'), "Não foi possível preparar o motor do jogo.");
+      source = source.replace('<script src="./game.js" defer></script>', bootstrap);
+      frame.srcdoc = source;
+
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("A página Grillon não carregou.")), 12000);
+        frame.addEventListener("load", () => { clearTimeout(timer); resolve(); }, { once: true });
+      });
+
+      const win = frame.contentWindow;
+      const doc = frame.contentDocument;
+      await waitFor(() => doc.getElementById("api-status-text").textContent.includes("APIs ligadas"), "as perguntas externas ficarem prontas");
+      assert(!win.__smokeError, win.__smokeError || "Erro JavaScript no arranque.");
+      assert(doc.getElementById("category-options").children.length >= 28, "As categorias não foram carregadas.");
+
+      const theme = doc.getElementById("theme-select");
+      theme.value = "abyss";
+      theme.dispatchEvent(new win.Event("change", { bubbles: true }));
+      assert(doc.documentElement.dataset.theme === "abyss", "O tema Abismo não foi aplicado.");
+
+      doc.getElementById("editor-category").value = "Teste do Navegador";
+      doc.getElementById("editor-title").value = "Diz uma resposta de teste.";
+      doc.getElementById("editor-subtitle").value = "Teste real no Chromium.";
+      doc.getElementById("editor-answers").value = "Base | 5\\nRaro | 100";
+      doc.getElementById("custom-question-form").dispatchEvent(new win.Event("submit", { bubbles: true, cancelable: true }));
+
+      const saved = JSON.parse(win.localStorage.getItem("grillon.custom.questions.v1") || "[]");
+      assert(saved.length === 1, "O editor não guardou a pergunta personalizada.");
+      const wanted = saved[0].id;
+      const ids = Array.from(doc.querySelectorAll("#category-options input")).map(input => input.value);
+      for (const id of ids) {
+        if (id === wanted) continue;
+        const checkbox = Array.from(doc.querySelectorAll("#category-options input")).find(input => input.value === id);
+        if (checkbox && checkbox.checked) checkbox.click();
+      }
+
+      doc.getElementById("round-length").value = "5";
+      doc.getElementById("round-time").value = "15";
+      doc.getElementById("start-button").click();
+      await waitFor(() => !doc.getElementById("answer-input").disabled, "a contagem decrescente terminar");
+      assert(doc.getElementById("question-total").textContent === "01", "A ronda não respeitou a seleção de uma categoria.");
+      doc.getElementById("answer-input").value = "Raro";
+      doc.getElementById("answer-form").dispatchEvent(new win.Event("submit", { bubbles: true, cancelable: true }));
+      assert(doc.getElementById("feedback").textContent.includes("100 pontos"), "A resposta não foi aceite ou pontuada corretamente.");
+      doc.getElementById("continue-button").click();
+      assert(!doc.getElementById("results-screen").hidden, "O ecrã de resultados não abriu.");
+      assert(doc.getElementById("final-score").textContent === "100", "A pontuação final no navegador está errada.");
+      assert(JSON.parse(win.localStorage.getItem("grillon.history.v1") || "[]").length === 1, "O histórico não guardou a ronda.");
+      assert(!win.__smokeError, win.__smokeError || "Ocorreu um erro JavaScript durante o jogo.");
+
+      statusNode.textContent = "GRILLON_BROWSER_SMOKE_OK";
+      document.body.dataset.smoke = "passed";
+    }
+
+    run().catch(error => {
+      statusNode.textContent = "GRILLON_BROWSER_SMOKE_FAILED: " + (error && error.stack ? error.stack : String(error));
+      document.body.dataset.smoke = "failed";
+    });
+  </script>
+</body>
+</html>
