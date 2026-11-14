@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071522">
+  <meta name="description" content="Grillon — um quiz em que as respostas menos óbvias valem mais pontos.">
+  <title>Grillon — O óbvio vale pouco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./game.js" defer></script>
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#" id="brand-home" aria-label="Grillon - início">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 40 40" fill="none">
+          <path d="M5 23.5C9.5 18.5 14 18.5 18.5 23.5C23 28.5 27.5 28.5 35 20" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <path d="M5 15.5C9.5 10.5 14 10.5 18.5 15.5C23 20.5 27.5 20.5 35 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity=".55"/>
+          <circle cx="20" cy="32" r="2.2" fill="currentColor"/>
+        </svg>
+      </span>
+      <span class="brand-name">GRILLON<span class="brand-dot">.</span></span>
+    </a>
+    <div class="topbar-right">
+      <div class="personal-best">
+        <span class="best-label">O TEU RECORDE</span>
+        <strong id="best-score">0 <small>/ 700</small></strong>
+      </div>
+      <span class="topbar-divider"></span>
+      <span class="edition-label">EDIÇÃO PESSOAL</span>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="screen home-screen" id="home-screen">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="eyebrow-dot"></span> UM QUIZ DE RESPOSTAS IMPROVÁVEIS</div>
+          <h1>O óbvio vale pouco.<br><span>O inesperado vale ouro.</span></h1>
+          <p class="hero-description">Há muitas respostas certas. Mas só as menos óbvias te levam ao fundo. Pensa fora da caixa, arrisca uma resposta e vê quantos pontos consegues sacar.</p>
+
+          <div class="hero-actions">
+            <button class="button button-primary" id="start-button">
+              COMEÇAR JOGO
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h11M10 5l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <span class="free-note"><span class="small-check">✓</span> Sem conta. Joga as vezes que quiseres.</span>
+          </div>
+
+          <div class="api-status" id="api-status">
+            <span class="api-pulse"></span>
+            <span id="api-status-text">A preparar perguntas extra...</span>
+          </div>
+        </div>
+
+        <aside class="dive-card">
+          <div class="dive-card-top">
+            <span class="card-kicker">A TUA MISSÃO</span>
+            <span class="live-pill"><span></span> PRONTO</span>
+          </div>
+          <div class="dive-illustration" aria-hidden="true">
+            <div class="dive-orbit orbit-one"></div>
+            <div class="dive-orbit orbit-two"></div>
+            <div class="dive-glow"></div>
+            <div class="dive-creature">✦</div>
+            <div class="dive-depth depth-top">0 m</div>
+            <div class="dive-depth depth-bottom">7 000 m</div>
+            <div class="dive-line"></div>
+          </div>
+          <div class="mission-stats">
+            <div><strong>07</strong><span>PERGUNTAS</span></div>
+            <div><strong>25<span class="stat-unit">s</span></strong><span>POR RESPOSTA</span></div>
+            <div><strong>700</strong><span>PONTOS MÁX.</span></div>
+          </div>
+          <div class="card-footnote"><span class="footnote-icon">↘</span> Quanto mais rara a resposta, mais fundo mergulhas.</div>
+        </aside>
+      </div>
+
+      <section class="how-section">
+        <div class="section-heading">
+          <span class="section-eyebrow">COMO JOGAR</span>
+          <span class="section-line"></span>
+        </div>
+        <div class="how-grid">
+          <article class="how-item">
+            <span class="how-number">01</span>
+            <div><h3>Lê a pergunta</h3><p>Recebes uma categoria aberta. Há várias respostas possíveis — não escolhas a primeira que te vier à cabeça.</p></div>
+          </article>
+          <article class="how-item">
+            <span class="how-number">02</span>
+            <div><h3>Encontra uma pérola</h3><p>Escreve uma resposta válida em 25 segundos. As respostas comuns pontuam pouco; as raras valem muito.</p></div>
+          </article>
+          <article class="how-item">
+            <span class="how-number">03</span>
+            <div><h3>Desce mais fundo</h3><p>São sete rondas. No fim, vê a pontuação, a profundidade e o teu melhor resultado.</p></div>
+          </article>
+        </div>
+      </section>
+
+      <footer class="home-footer">
+        <span>GRILLON <span class="brand-dot">·</span> FEITO PARA JOGAR</span>
+        <span>O teu recorde fica guardado neste navegador.</span>
+      </footer>
+    </section>
+
+    <section class="screen game-screen" id="game-screen" hidden>
+      <div class="game-header">
+        <button class="text-button" id="quit-button"><span aria-hidden="true">←</span> SAIR DO JOGO</button>
+        <div class="game-progress-label"><span id="question-number">01</span><span class="muted-slash">/</span>07</div>
+        <div class="score-chip"><span class="score-chip-label">PONTOS</span><strong id="live-score">0</strong></div>
+      </div>
+
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+
+      <div class="question-layout">
+        <section class="question-panel">
+          <div class="question-meta">
+            <span class="category-pill" id="question-category">CATEGORIA</span>
+            <span class="question-index">PERGUNTA <span id="question-index">01</span> DE 07</span>
+          </div>
+          <h2 id="question-title">Nomeia um animal.</h2>
+          <p class="question-hint" id="question-subtitle">Pode ser qualquer um. Escolhe um que não seja demasiado óbvio.</p>
+
+          <div class="answer-area">
+            <form id="answer-form" autocomplete="off">
+              <label for="answer-input">A TUA RESPOSTA</label>
+              <div class="input-row">
+                <input id="answer-input" name="answer" type="text" maxlength="70" placeholder="Escreve aqui..." spellcheck="false" autocapitalize="off" autocomplete="off">
+                <button type="submit" class="button button-submit" id="submit-button">CONFIRMAR <span aria-hidden="true">↗</span></button>
+              </div>
+            </form>
+            <div class="feedback" id="feedback" role="status" aria-live="polite" hidden></div>
+            <div class="answer-actions">
+              <span class="answer-tip"><span aria-hidden="true">↳</span> Não sabes? Podes passar sem pontos.</span>
+              <button class="text-button skip-button" id="skip-button">PASSAR <span aria-hidden="true">→</span></button>
+              <button class="button button-continue" id="continue-button" hidden>CONTINUAR <span aria-hidden="true">→</span></button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="timer-panel">
+          <div class="timer-top"><span class="section-eyebrow">TEMPO RESTANTE</span><span class="timer-live"><i></i> AO VIVO</span></div>
+          <div class="timer-number"><strong id="time-left">25</strong><span>SEG</span></div>
+          <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+          <div class="timer-bottom"><span>RAPIDEZ</span><span>25s</span></div>
+          <div class="rarity-guide">
+            <div class="rarity-heading">ESCALA DE RARIDADE</div>
+            <div class="rarity-row"><span class="rarity-dot rarity-1"></span><span>Comum</span><strong>5</strong></div>
+            <div class="rarity-row"><span class="rarity-dot rarity-2"></span><span>Conhecida</span><strong>15</strong></div>
+            <div class="rarity-row"><span class="rarity-dot rarity-3"></span><span>Incomum</span><strong>30</strong></div>
+            <div class="rarity-row"><span class="rarity-dot rarity-4"></span><span>Rara</span><strong>55</strong></div>
+            <div class="rarity-row"><span class="rarity-dot rarity-5"></span><span>Abissal</span><strong>80</strong></div>
+            <div class="rarity-row"><span class="rarity-dot rarity-6"></span><span>Lendária</span><strong>100</strong></div>
+          </div>
+        </aside>
+      </div>
+      <div class="game-bottom-note"><span class="note-star">✦</span> A resposta tem de pertencer à categoria e estar no banco de respostas do Grillon.</div>
+    </section>
+
+    <section class="screen results-screen" id="results-screen" hidden>
+      <div class="results-topline"><span class="section-eyebrow">FIM DO MERGULHO</span><span class="result-date" id="result-date"></span></div>
+      <div class="results-hero">
+        <div class="result-score-block">
+          <span class="result-overline">A TUA PONTUAÇÃO</span>
+          <div class="result-score"><strong id="final-score">0</strong><span>/ 700</span></div>
+          <h2 id="result-title">Boa tentativa.</h2>
+          <p id="result-description">Cada mergulho é uma oportunidade para encontrar respostas melhores.</p>
+        </div>
+        <div class="depth-card">
+          <div class="depth-label">PROFUNDIDADE ATINGIDA</div>
+          <div class="depth-number"><strong id="final-depth">0</strong><span>METROS</span></div>
+          <div class="depth-meter"><div id="depth-meter-fill"></div></div>
+          <div class="depth-scale"><span>SUPERFÍCIE</span><span>ABISMO</span></div>
+        </div>
+      </div>
+
+      <div class="review-heading"><div><span class="section-eyebrow">RELATÓRIO DA RONDA</span><h3>As tuas respostas</h3></div><span class="review-count">07 PERGUNTAS</span></div>
+      <div class="review-list" id="review-list"></div>
+      <div class="results-actions">
+        <button class="button button-primary" id="play-again-button">JOGAR OUTRA VEZ <span aria-hidden="true">↗</span></button>
+        <button class="button button-secondary" id="home-button">VOLTAR AO INÍCIO</button>
+      </div>
+      <footer class="home-footer results-footer"><span>GRILLON <span class="brand-dot">·</span> FEITO PARA JOGAR</span><span>O teu resultado é guardado apenas neste navegador.</span></footer>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
