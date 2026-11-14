@@ -1148,12 +1148,15 @@
     if (!Array.isArray(entries)) return [];
     return entries.slice(0, 200).map((entry) => {
       if (!entry || typeof entry !== "object") return null;
-      const date = typeof entry.date === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(entry.date) ? entry.date : "";
+      const date = typeof entry.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(entry.date) ? entry.date : "";
       const mode = entry.mode === "daily" ? "daily" : entry.mode === "practice" ? "practice" : "";
-      const maxScore = Math.max(100, Math.min(1000, Math.round(Number(entry.maxScore) || 0)));
+      const rawMaxScore = Math.round(Number(entry.maxScore));
+      const rawQuestionCount = Math.round(Number(entry.questionCount));
+      if (!date || !mode || !Number.isFinite(rawMaxScore) || rawMaxScore < 100 || rawMaxScore > 1000 ||
+          !Number.isFinite(rawQuestionCount) || rawQuestionCount < 1 || rawQuestionCount > 10) return null;
+      const maxScore = rawMaxScore;
       const score = Math.max(0, Math.min(maxScore, Math.round(Number(entry.score) || 0)));
-      const questionCount = Math.max(1, Math.min(10, Math.round(Number(entry.questionCount) || 0)));
-      if (!date || !mode || !Number.isFinite(maxScore) || maxScore < 100 || !questionCount) return null;
+      const questionCount = rawQuestionCount;
       const parsedTime = typeof entry.completedAt === "string" ? Date.parse(entry.completedAt) : NaN;
       const completedAt = Number.isFinite(parsedTime) ? new Date(parsedTime).toISOString() : date + "T12:00:00.000Z";
       return {
@@ -1195,7 +1198,7 @@
 
   function getDailyStreakSummary(history, todayKey) {
     const dates = Array.from(new Set(history
-      .filter((entry) => entry && entry.mode === "daily" && /^\\d{4}-\\d{2}-\\d{2}$/.test(entry.date))
+      .filter((entry) => entry && entry.mode === "daily" && /^\d{4}-\d{2}-\d{2}$/.test(entry.date))
       .map((entry) => entry.date))).sort();
     const played = new Set(dates);
     let anchor = played.has(todayKey) ? todayKey : dateKeyOffset(todayKey, -1);
@@ -1425,6 +1428,7 @@
     $("question-title").textContent = currentQuestion.title;
     $("question-subtitle").textContent = currentQuestion.subtitle;
     $("time-left").textContent = String(remaining);
+    $("time-left").classList.remove("urgent");
     $("timer-total").textContent = roundSeconds + "s";
     $("timer-fill").style.width = "100%";
     $("timer-fill").classList.remove("warning");
@@ -1461,6 +1465,7 @@
     if (locked) return;
     remaining -= 1;
     $("time-left").textContent = String(Math.max(remaining, 0));
+    $("time-left").classList.toggle("urgent", remaining <= 7);
     $("timer-fill").style.width = Math.max(0, (remaining / roundSeconds) * 100) + "%";
     if (remaining <= 7) $("timer-fill").classList.add("warning");
     if (remaining <= 0) {
