@@ -29,7 +29,11 @@ for (const id of [
   "countdown-number", "custom-answer-panel", "custom-answer-points",
   "save-custom-answer", "cancel-custom-answer", "add-answer-button", "copy-result-button",
   "final-percent", "depth-max-label", "home-depth-max", "mode-pill",
-  "results-mode-label", "timer-total"
+  "results-mode-label", "timer-total", "custom-question-form",
+  "editor-category", "editor-title", "editor-subtitle", "editor-answers",
+  "editor-question-id", "editor-save-button", "editor-cancel-button",
+  "custom-question-list", "custom-question-count", "export-data-button",
+  "import-data-button", "import-data-file", "editor-feedback"
 ]) {
   assert.ok(uniqueIds.has(id), "Falta o elemento de interface: " + id);
 }
@@ -58,6 +62,31 @@ assert.equal(normalise("O Leão!"), "leao", "A normalização deve ignorar artig
 assert.notEqual(normalise("C"), normalise("C++"), "C e C++ têm de ser respostas diferentes.");
 assert.notEqual(normalise("C"), normalise("C#"), "C e C# têm de ser respostas diferentes.");
 
+const POINTS = [5, 15, 30, 55, 80, 100];
+const parserMatch = js.match(/function\s+parseAnswerLines\s*\([^)]*\)\s*\{[\s\S]*?\n  \}/);
+assert.ok(parserMatch, "O parser de respostas do editor deve existir.");
+const parseAnswerLines = new Function("normalise", "POINTS", "return (" + parserMatch[0].trim() + ")")(normalise, POINTS);
+
+const validAnswers = parseAnswerLines("C | 5\nC++ | 100\nO Leão | 55 | lion, leo");
+assert.equal(validAnswers.errors.length, 0, "O editor deve aceitar respostas válidas.");
+assert.equal(validAnswers.answers.length, 3, "O editor deve conservar todas as respostas válidas.");
+assert.notEqual(normalise(validAnswers.answers[0].name), normalise(validAnswers.answers[1].name), "C e C++ não podem colidir.");
+
+const duplicateAlias = parseAnswerLines("Creeper | 5 | creeper\nWarden | 80");
+assert.ok(duplicateAlias.errors.length > 0, "Aliases duplicados na mesma linha devem ser rejeitados.");
+const duplicateAnswer = parseAnswerLines("Creeper | 5\ncreeper | 80");
+assert.ok(duplicateAnswer.errors.length > 0, "Respostas duplicadas devem ser rejeitadas.");
+const invalidTier = parseAnswerLines("Creeper | 7\nWarden | 80");
+assert.ok(invalidTier.errors.length > 0, "Níveis de raridade fora da escala devem ser rejeitados.");
+
+assert.match(js, /function loadCustomQuestions\(/, "As perguntas pessoais têm de ser carregadas.");
+assert.match(js, /function saveQuestionFromEditor\(/, "O editor tem de guardar perguntas.");
+assert.match(js, /function exportBackup\(/, "A exportação de cópias tem de existir.");
+assert.match(js, /async function importBackup\(/, "A importação de cópias tem de ser assíncrona.");
+assert.match(js, /function createBackup\(/, "O formato da cópia de segurança tem de existir.");
+assert.match(js, /questionPool = BUILTIN_QUESTIONS\.map\(cloneQuestion\)/, "O banco de treino deve ser separado do banco diário.");
+assert.match(js, /function saveCustomAnswer\(\)\s*\{\s*if \(locked \|\| currentMode === "daily"\)/, "As respostas pessoais não podem alterar a pontuação do desafio diário.");
+
 const hashSeed = extractFunction("hashSeed");
 const shuffleMatch = js.match(/function\s+seededShuffle\s*\([^)]*\)\s*\{[\s\S]*?\n  \}/);
 assert.ok(shuffleMatch, "A função seededShuffle deve existir.");
@@ -73,5 +102,5 @@ assert.equal(new Set(dailyA.slice(0, 7)).size, 7, "As sete perguntas diárias n�
 console.log("Grillon: validação concluída.");
 console.log("- Estrutura e sintaxe ligadas.");
 console.log("- Sem IDs duplicados ou seletores inexistentes.");
-console.log("- Desafio diário, categorias, respostas pessoais e estatísticas presentes.");
+console.log("- Desafio diário, editor de perguntas, backups e estatísticas testados.");
 console.log("- APIs e escala de raridade verificadas.");
