@@ -46,6 +46,30 @@ assert.match(js, /const POINTS = \[5, 15, 30, 55, 80, 100\]/, "A escala de rarid
 assert.match(js, /async function copyResult\(/, "A partilha do resultado deve funcionar de forma assíncrona.");
 assert.match(js, /C\+\+/, "A categoria de programação deve incluir C++.");
 
+function extractFunction(name) {
+  const pattern = new RegExp("function\\s+" + name + "\\s*\\([^)]*\\)\\s*\\{[\\s\\S]*?\\n  \\}");
+  const match = js.match(pattern);
+  assert.ok(match, "Não foi possível encontrar a função " + name);
+  return new Function("return (" + match[0].trim() + ")")();
+}
+
+const normalise = extractFunction("normalise");
+assert.equal(normalise("O Leão!"), "leao", "A normalização deve ignorar artigos, acentos e pontuação.");
+assert.notEqual(normalise("C"), normalise("C++"), "C e C++ têm de ser respostas diferentes.");
+assert.notEqual(normalise("C"), normalise("C#"), "C e C# têm de ser respostas diferentes.");
+
+const hashSeed = extractFunction("hashSeed");
+const shuffleMatch = js.match(/function\\s+seededShuffle\\s*\\([^)]*\\)\\s*\\{[\\s\\S]*?\\n  \\}/);
+assert.ok(shuffleMatch, "A função seededShuffle deve existir.");
+const seededShuffle = new Function("hashSeed", "return (" + shuffleMatch[0].trim() + ")")(hashSeed);
+const sampleQuestions = Array.from({ length: 26 }, (_, index) => "question-" + index);
+const dailyA = seededShuffle(sampleQuestions, "grillon-daily-v1-2026-11-14");
+const dailyB = seededShuffle(sampleQuestions, "grillon-daily-v1-2026-11-14");
+const nextDay = seededShuffle(sampleQuestions, "grillon-daily-v1-2026-11-15");
+assert.deepEqual(dailyA, dailyB, "O desafio tem de ser igual para a mesma data.");
+assert.notDeepEqual(dailyA, nextDay, "O desafio tem de mudar entre datas.");
+assert.equal(new Set(dailyA.slice(0, 7)).size, 7, "As sete perguntas diárias não podem repetir-se.");
+
 console.log("Grillon: validação concluída.");
 console.log("- Estrutura e sintaxe ligadas.");
 console.log("- Sem IDs duplicados ou seletores inexistentes.");
