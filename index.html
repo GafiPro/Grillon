@@ -46,14 +46,16 @@
           <p class="hero-description">Há muitas respostas certas. Mas só as menos óbvias te levam ao fundo. Pensa fora da caixa, arrisca uma resposta e vê quantos pontos consegues sacar.</p>
 
           <div class="hero-actions">
-            <button class="button button-primary" id="start-button">
-              COMEÇAR JOGO
+            <button class="button button-primary" id="daily-start-button">
+              DESAFIO DO DIA
               <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h11M10 5l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
-            <span class="free-note"><span class="small-check">✓</span> Sem conta. Joga as vezes que quiseres.</span>
+            <button class="button button-secondary" id="start-button">TREINO LIVRE</button>
+            <span class="free-note"><span class="small-check">✓</span> Sem conta. Sem limites.</span>
           </div>
 
-          <section class="setup-panel" aria-label="Configuração da ronda">
+          <p class="daily-status" id="daily-status">O desafio diário muda à meia-noite (hora de Portugal).</p>
+          <section class="setup-panel" aria-label="Configuração do treino livre">
             <div class="setup-heading">
               <div><span class="setup-kicker">PERSONALIZA A RONDA</span><strong>Joga à tua maneira</strong></div>
               <span class="setup-tag">SEM LIMITES</span>
@@ -136,6 +138,15 @@
         </div>
       </section>
 
+      <section class="career-panel" aria-label="Estatísticas pessoais">
+        <div class="career-heading"><div><span class="section-eyebrow">O TEU PERCURSO</span><h3>Estatísticas pessoais</h3></div><span class="career-private">GUARDADAS NESTE DISPOSITIVO</span></div>
+        <div class="career-grid">
+          <div class="career-stat"><span>JOGOS</span><strong id="stat-games">0</strong></div>
+          <div class="career-stat"><span>MÉDIA</span><strong id="stat-average">0<small>%</small></strong></div>
+          <div class="career-stat"><span>RECORDE</span><strong id="stat-best">0<small>%</small></strong></div>
+          <div class="career-stat"><span>RESPOSTAS ABISSAIS+</span><strong id="stat-rare">0</strong></div>
+        </div>
+      </section>
       <footer class="home-footer">
         <span>GRILLON <span class="brand-dot">·</span> FEITO PARA JOGAR</span>
         <span>O teu recorde fica guardado neste navegador.</span>
@@ -153,6 +164,9 @@
 
       <div class="question-layout">
         <section class="question-panel">
+          <div class="countdown-overlay" id="countdown-overlay" hidden>
+            <span>PREPARA-TE</span><strong id="countdown-number">3</strong><small>A pergunta vai começar</small>
+          </div>
           <div class="question-meta">
             <span class="category-pill" id="question-category">CATEGORIA</span>
             <span class="question-index">PERGUNTA <span id="question-index">01</span> DE <span id="question-total-label">07</span></span>
@@ -169,9 +183,25 @@
               </div>
             </form>
             <div class="feedback" id="feedback" role="status" aria-live="polite" hidden></div>
+            <div class="custom-answer-panel" id="custom-answer-panel" hidden>
+              <p>Queres guardar esta resposta no teu banco pessoal? Confirma que pertence à categoria e escolhe a raridade.</p>
+              <div class="custom-answer-controls">
+                <label for="custom-answer-points">RARIDADE</label>
+                <select id="custom-answer-points">
+                  <option value="5">Comum · 5 pontos</option>
+                  <option value="15">Conhecida · 15 pontos</option>
+                  <option value="30" selected>Incomum · 30 pontos</option>
+                  <option value="55">Rara · 55 pontos</option>
+                  <option value="80">Abissal · 80 pontos</option>
+                  <option value="100">Lendária · 100 pontos</option>
+                </select>
+                <button class="button button-submit" id="save-custom-answer" type="button">GUARDAR E VALIDAR</button>
+              </div>
+            </div>
             <div class="answer-actions">
               <span class="answer-tip"><span aria-hidden="true">↳</span> Não sabes? Podes passar sem pontos.</span>
               <button class="text-button skip-button" id="skip-button">PASSAR <span aria-hidden="true">→</span></button>
+              <button class="text-button add-answer-button" id="add-answer-button" hidden>ADICIONAR AO MEU BANCO <span aria-hidden="true">＋</span></button>
               <button class="button button-continue" id="continue-button" hidden>CONTINUAR <span aria-hidden="true">→</span></button>
             </div>
           </div>
@@ -193,7 +223,7 @@
           </div>
         </aside>
       </div>
-      <div class="game-bottom-note"><span class="note-star">✦</span> A resposta tem de pertencer à categoria e estar no banco de respostas do Grillon.</div>
+      <div class="game-bottom-note"><span class="note-star">✦</span> Uma resposta em falta? Podes adicioná-la ao teu banco pessoal e definir a raridade.</div>
     </section>
 
     <section class="screen results-screen" id="results-screen" hidden>
@@ -202,6 +232,7 @@
         <div class="result-score-block">
           <span class="result-overline">A TUA PONTUAÇÃO</span>
           <div class="result-score"><strong id="final-score">0</strong><span>/ <span id="final-max-score">700</span></span></div>
+          <div class="result-percent" id="final-percent">0% DA PONTUAÇÃO MÁXIMA</div>
           <h2 id="result-title">Boa tentativa.</h2>
           <p id="result-description">Cada mergulho é uma oportunidade para encontrar respostas melhores.</p>
         </div>
@@ -217,6 +248,7 @@
       <div class="review-list" id="review-list"></div>
       <div class="results-actions">
         <button class="button button-primary" id="play-again-button">JOGAR OUTRA VEZ <span aria-hidden="true">↗</span></button>
+        <button class="button button-secondary" id="copy-result-button">COPIAR RESULTADO</button>
         <button class="button button-secondary" id="home-button">VOLTAR AO INÍCIO</button>
       </div>
       <footer class="home-footer results-footer"><span>GRILLON <span class="brand-dot">·</span> FEITO PARA JOGAR</span><span>O teu resultado é guardado apenas neste navegador.</span></footer>
