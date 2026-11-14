@@ -85,8 +85,7 @@
       ["Kratos", 30], ["Geralt de Rívia", 30, ["geralt", "geralt of rivia"]], ["Totoro", 55],
       ["WALL-E", 55, ["walle"]], ["Baymax", 55], ["Samus Aran", 80, ["samus"]],
       ["GLaDOS", 80, ["glados"]], ["Hornet", 100], ["Fawful", 100]
-    ])
-
+    ]),
     makeQuestion("capitals", "Geografia", "Diz o nome de uma capital.", "Pode ser a capital de qualquer país do mundo.", [
       ["Lisboa", 5, ["lisbon"]], ["Paris", 5], ["Londres", 5, ["london"]], ["Madrid", 15],
       ["Tóquio", 15, ["tokyo"]], ["Seul", 30, ["seoul"]], ["Brasília", 30, ["brasilia"]],
