@@ -41,6 +41,8 @@
       let source = await response.text();
       source = source.replace("<head>", '<head><base href="../">');
 
+      const closingScript = "</scr" + "ipt>";
+      const originalGameScript = '<script src="./game.js" defer>' + closingScript;
       const bootstrap = [
         "<script>",
         "window.__smokeError = null;",
@@ -56,12 +58,12 @@
         "  if (match) { const id = Number(match[1]); return { ok: true, json: async () => ({ name: 'species-' + id, names: [{ name: 'Espécie ' + id }], capture_rate: id + 20 }) }; }",
         "  throw new Error('Pedido externo inesperado: ' + url);",
         "};",
-        "<\\/script>",
-        '<script src="./game.js" defer><\\/script>'
+        closingScript,
+        '<script src="./game.js" defer>' + closingScript
       ].join("");
 
-      assert(source.includes('<script src="./game.js" defer></script>'), "Não foi possível preparar o motor do jogo.");
-      source = source.replace('<script src="./game.js" defer></script>', bootstrap);
+      assert(source.includes(originalGameScript), "Não foi possível preparar o motor do jogo.");
+      source = source.replace(originalGameScript, bootstrap);
       frame.srcdoc = source;
 
       await new Promise((resolve, reject) => {
