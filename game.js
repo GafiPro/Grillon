@@ -120,8 +120,91 @@
       ["Nintendo", 15], ["Xiaomi", 15], ["Nvidia", 30], ["Logitech", 30], ["Razer", 30],
       ["ASUS", 55], ["Acer", 55], ["Valve", 55], ["Framework", 80], ["Fairphone", 80],
       ["Nothing", 80], ["Wacom", 100], ["Supermicro", 100]
+    ]),
+    makeQuestion("minecraft-mobs", "Gaming · Minecraft", "Diz o nome de uma criatura do Minecraft.", "Vale qualquer mob hostil, passivo ou neutro do jogo.", [
+      ["Zombie", 5, ["zombie"]], ["Creeper", 5], ["Skeleton", 5], ["Enderman", 15], ["Spider", 15],
+      ["Villager", 15], ["Witch", 30], ["Slime", 30], ["Phantom", 30], ["Shulker", 55],
+      ["Allay", 55], ["Warden", 55], ["Sniffer", 80], ["Breeze", 80], ["Hoglin", 80],
+      ["Strider", 100], ["Bogged", 100], ["Elder Guardian", 100]
+    ]),
+    makeQuestion("rocket-league-cars", "Gaming · Rocket League", "Diz o nome de um carro do Rocket League.", "Vale qualquer carroçaria jogável, incluindo as menos usadas.", [
+      ["Octane", 5], ["Fennec", 5], ["Dominus", 15], ["Breakout", 15], ["Merc", 30],
+      ["Takumi", 30], ["Aftershock", 55], ["Dingo", 55], ["Twinzer", 55], ["Masamune", 80],
+      ["Animus GP", 80], ["Cyclone", 80], ["Mantis", 100], ["Paladin", 100], ["Road Hog", 100],
+      ["Porsche 911 Turbo", 55], ["Nissan Skyline", 30], ["Batmobile", 30]
+    ]),
+    makeQuestion("consoles", "Gaming · Consolas", "Diz o nome de uma consola de videojogos.", "Consolas de mesa, portáteis e sistemas clássicos também contam.", [
+      ["PlayStation 5", 5, ["ps5"]], ["Nintendo Switch", 5, ["switch"]], ["Xbox Series X", 5, ["series x"]],
+      ["PlayStation 4", 15, ["ps4"]], ["Xbox 360", 15], ["Nintendo DS", 15], ["Game Boy", 30],
+      ["PSP", 30, ["playstation portable"]], ["Wii U", 55], ["Sega Dreamcast", 55, ["dreamcast"]],
+      ["PlayStation Vita", 55, ["ps vita", "vita"]], ["Atari Lynx", 80], ["Neo Geo", 80],
+      ["WonderSwan", 100], ["Ouya", 100], ["PC Engine", 100, ["turbografx 16"]]
+    ]),
+    makeQuestion("programming-languages", "Tecnologia · Programação", "Diz o nome de uma linguagem de programação.", "Linguagens gerais, de scripting, funcionais ou de baixo nível contam.", [
+      ["Python", 5], ["JavaScript", 5], ["Java", 5], ["C", 15], ["C++", 15], ["C#", 15],
+      ["PHP", 30], ["Ruby", 30], ["Go", 30, ["golang"]], ["Rust", 30], ["Kotlin", 55],
+      ["Swift", 55], ["Lua", 55], ["Haskell", 80], ["Elixir", 80], ["Erlang", 80],
+      ["Fortran", 100], ["COBOL", 100], ["Zig", 100], ["OCaml", 100]
+    ]),
+    makeQuestion("smartphone-brands", "Tecnologia · Telemóveis", "Diz o nome de uma marca de telemóveis.", "Marcas atuais ou históricas são aceites.", [
+      ["Apple", 5], ["Samsung", 5], ["Xiaomi", 5], ["Huawei", 15], ["Google", 15],
+      ["OnePlus", 15], ["Motorola", 30], ["Nokia", 30], ["Sony", 30], ["Oppo", 30],
+      ["Vivo", 55], ["Honor", 55], ["Nothing", 55], ["Asus", 80], ["Fairphone", 80],
+      ["Meizu", 80], ["BlackBerry", 100], ["Palm", 100], ["Vertu", 100]
+    ]),
+    makeQuestion("instruments", "Música · Instrumentos", "Diz o nome de um instrumento musical.", "Instrumentos acústicos, elétricos e tradicionais também contam.", [
+      ["Piano", 5], ["Guitarra", 5, ["guitar"]], ["Bateria", 5, ["drums"]], ["Violino", 15, ["violin"]],
+      ["Flauta", 15, ["flute"]], ["Saxofone", 15, ["saxophone"]], ["Trompete", 30, ["trumpet"]],
+      ["Harpa", 30, ["harp"]], ["Acordeão", 30, ["acordeao", "accordion"]], ["Bandolim", 55],
+      ["Didgeridoo", 55], ["Kalimba", 55], ["Theremin", 80], ["Oud", 80], ["Hang", 80],
+      ["Nyckelharpa", 100], ["Erhu", 100], ["Shamisen", 100]
+    ]),
+    makeQuestion("streaming-services", "Internet · Streaming", "Diz o nome de um serviço de streaming.", "Vídeo, música, anime ou transmissões em direto contam.", [
+      ["Netflix", 5], ["Spotify", 5], ["YouTube", 5], ["Prime Video", 15], ["Disney+", 15],
+      ["Twitch", 15], ["Apple Music", 30], ["Crunchyroll", 30], ["Max", 30], ["Deezer", 55],
+      ["Tidal", 55], ["MUBI", 55], ["SoundCloud", 55], ["Bandcamp", 80], ["Nebula", 80],
+      ["Dropout", 80], ["Qobuz", 100], ["Curiosity Stream", 100]
+    ]),
+    makeQuestion("board-games", "Jogos · Tabuleiro", "Diz o nome de um jogo de tabuleiro.", "Jogos clássicos, modernos ou de estratégia contam.", [
+      ["Monopoly", 5], ["Xadrez", 5, ["chess"]], ["Scrabble", 15], ["Cluedo", 15, ["clue"]],
+      ["Risk", 15], ["Catan", 30], ["Carcassonne", 30], ["Ticket to Ride", 30],
+      ["Azul", 55], ["Wingspan", 55], ["7 Wonders", 55], ["Terraforming Mars", 80],
+      ["Root", 80], ["Scythe", 80], ["Crokinole", 100], ["Go", 100], ["Hive", 100]
+    ]),
+    makeQuestion("f1-teams", "Desporto · Fórmula 1", "Diz o nome de uma equipa de Fórmula 1.", "Equipas atuais ou históricas da categoria contam.", [
+      ["Ferrari", 5], ["McLaren", 5], ["Mercedes", 5], ["Red Bull Racing", 15, ["red bull"]],
+      ["Williams", 15], ["Aston Martin", 15], ["Alpine", 30], ["Haas", 30],
+      ["Racing Bulls", 30, ["rb", "rb f1 team", "alphatauri", "toro rosso"]],
+      ["Sauber", 55], ["Jordan", 55], ["Brawn GP", 55], ["Lotus", 80],
+      ["Minardi", 80], ["Arrows", 100], ["Tyrrell", 100], ["Brabham", 100]
+    ]),
+    makeQuestion("dishes", "Comida · Pratos", "Diz o nome de um prato de comida.", "Pratos de qualquer país, incluindo especialidades regionais.", [
+      ["Pizza", 5], ["Hambúrguer", 5, ["hamburger"]], ["Sushi", 5], ["Bacalhau à Brás", 15],
+      ["Francesinha", 15], ["Lasanha", 15, ["lasagna"]], ["Ramen", 30], ["Pad Thai", 30],
+      ["Feijoada", 30], ["Biryani", 55], ["Goulash", 55], ["Ceviche", 55], ["Bibimbap", 80],
+      ["Khachapuri", 80], ["Jollof rice", 80, ["arroz jollof"]], ["Hákarl", 100],
+      ["Koshari", 100], ["Pkhali", 100]
+    ]),
+    makeQuestion("web-browsers", "Internet · Navegadores", "Diz o nome de um navegador de Internet.", "Vale qualquer browser atual ou histórico.", [
+      ["Google Chrome", 5, ["chrome"]], ["Safari", 5], ["Microsoft Edge", 15, ["edge"]],
+      ["Firefox", 15, ["mozilla firefox"]], ["Opera", 15], ["Brave", 30], ["Vivaldi", 30],
+      ["Tor Browser", 55], ["Samsung Internet", 55], ["Arc", 55], ["Waterfox", 80],
+      ["Pale Moon", 80], ["Midori", 80], ["Lynx", 100], ["SeaMonkey", 100],
+      ["Falkon", 100], ["K-Meleon", 100]
+    ]),
+    makeQuestion("mythical-creatures", "Fantasia · Criaturas", "Diz o nome de uma criatura mitológica ou lendária.", "Criaturas de lendas, mitologias e folclore de qualquer cultura.", [
+      ["Dragão", 5, ["dragon"]], ["Unicórnio", 5, ["unicorn"]], ["Fénix", 15, ["phoenix"]], ["Sereia", 15, ["mermaid"]],
+      ["Grifo", 30, ["griffin"]], ["Centauro", 30, ["centaur"]], ["Hidra", 30, ["hydra"]],
+      ["Basilisco", 55, ["basilisk"]], ["Minotauro", 55, ["minotaur"]], ["Quimera", 55, ["chimera"]],
+      ["Manticora", 80, ["manticore"]], ["Kelpie", 80], ["Qilin", 80, ["kirin"]],
+      ["Roc", 100], ["Nuckelavee", 100], ["Baku", 100], ["Tikbalang", 100]
+    ]),
+    makeQuestion("cities", "Geografia · Cidades", "Diz o nome de uma cidade.", "Qualquer cidade do mundo, grande ou pequena, é válida.", [
+      ["Lisboa", 5], ["Londres", 5], ["Paris", 5], ["Nova Iorque", 5, ["new york"]],
+      ["Tóquio", 15, ["tokyo"]], ["Porto", 15], ["Barcelona", 15], ["Istambul", 30, ["istanbul"]],
+      ["Osaka", 30], ["Marrakech", 30], ["Tallinn", 55], ["Tbilisi", 55], ["Tartu", 55],
+      ["Chiang Mai", 80], ["Ushuaia", 80], ["Samarkand", 80], ["Palau", 100], ["Gjirokastër", 100]
     ])
-
   ];
 
   let questionPool = BUILTIN_QUESTIONS.slice();
