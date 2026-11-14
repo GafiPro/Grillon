@@ -364,12 +364,28 @@
       const name = entry.name.trim().slice(0, 70);
       const points = Number(entry.points);
       if (!name || !POINTS.includes(points)) return;
-      const aliases = [name].concat(entry.aliases.filter((alias) => typeof alias === "string").slice(0, 8));
       const key = normalise(name);
       const exists = question.answers.some((answer) =>
         answer.aliases.some((alias) => normalise(alias) === key)
       );
-      if (!exists) question.answers.push({ name, points, aliases, custom: true });
+      if (exists || !key) return;
+
+      const occupied = new Set(question.answers.flatMap((answer) => answer.aliases.map(normalise)));
+      const aliases = [name];
+      const localAliases = new Set([key]);
+      let conflict = false;
+      entry.aliases.filter((alias) => typeof alias === "string").slice(0, 8).forEach((rawAlias) => {
+        const alias = rawAlias.trim().slice(0, 70);
+        const aliasKey = normalise(alias);
+        if (!aliasKey || aliasKey === key) return;
+        if (occupied.has(aliasKey) || localAliases.has(aliasKey)) {
+          conflict = true;
+          return;
+        }
+        localAliases.add(aliasKey);
+        aliases.push(alias);
+      });
+      if (!conflict) question.answers.push({ name, points, aliases, custom: true });
     });
   }
 
