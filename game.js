@@ -870,6 +870,13 @@
       setEditorFeedback("Indica uma categoria e uma pergunta com pelo menos 5 caracteres.", true);
       return;
     }
+    const duplicateCategory = questionPool.find((item) =>
+      item.id !== editingQuestionId && normalise(item.category) === normalise(category)
+    );
+    if (duplicateCategory) {
+      setEditorFeedback("Já existe uma categoria com esse nome. Escolhe um nome diferente.", true);
+      return;
+    }
     if (parsed.errors.length) {
       setEditorFeedback(parsed.errors.slice(0, 3).join(" "), true);
       return;
