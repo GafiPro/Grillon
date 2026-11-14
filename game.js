@@ -9,6 +9,7 @@
   const LEGACY_BEST_KEY = "grillon.best.v1";
   const SETTINGS_KEY = "grillon.settings.v1";
   const CUSTOM_ANSWERS_KEY = "grillon.custom.answers.v1";
+  const CUSTOM_QUESTIONS_KEY = "grillon.custom.questions.v1";
   const CAREER_STATS_KEY = "grillon.career.stats.v1";
   const DAILY_BEST_KEY = "grillon.daily.best.v1";
   const PREVIEW_SECONDS = 3;
@@ -211,8 +212,17 @@
     ])
   ];
 
-  let questionPool = BUILTIN_QUESTIONS.slice();
+  function cloneQuestion(question) {
+    return {
+      ...question,
+      answers: question.answers.map((answer) => ({ ...answer, aliases: answer.aliases.slice() }))
+    };
+  }
+
+  let questionPool = BUILTIN_QUESTIONS.map(cloneQuestion);
+  let customQuestions = [];
   let activeQuestions = [];
+  let editingQuestionId = "";
   let currentIndex = 0;
   let currentQuestion = null;
   let currentResults = [];
