@@ -12,7 +12,7 @@ assert.match(html, /href="\.\/styles\.css"/, "A folha de estilos deve estar liga
 assert.match(html, /src="\.\/game\.js"/, "O motor do jogo deve estar ligado.");
 assert.match(css, /:root\s*\{/, "A folha de estilos deve conter as variáveis base.");
 assert.match(css, /\.library-panel/, "O editor pessoal deve ter estilos.");
-assert.match(launcher, /--bind 127\\.0\\.0\\.1/, "O lançador do Windows deve limitar o servidor ao próprio computador.");
+assert.ok(launcher.includes("--bind 127.0.0.1"), "O lançador do Windows deve limitar o servidor ao próprio computador.");
 assert.ok(launcher.includes("http://127.0.0.1:%PORT%/"), "O lançador deve abrir o endereço local.");
 assert.match(js, /https:\/\/restcountries\.com\/v3\.1\/all/, "A integração REST Countries deve existir.");
 assert.match(js, /https:\/\/pokeapi\.co\/api\/v2\/pokemon-species/, "A integração PokéAPI deve existir.");
