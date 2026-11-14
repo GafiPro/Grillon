@@ -470,3 +470,70 @@ h1 span { color: var(--cyan); }
   .rarity-disclaimer { font-size: 8px; }
   .answer-sheet { max-height: 185px; }
 }
+
+
+/* Personal question workshop and portable backup */
+.library-panel {
+  margin: 0 0 42px;
+  padding: 22px;
+  border: 1px solid rgba(139, 190, 211, .14);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(14, 37, 53, .82), rgba(8, 25, 39, .75));
+}
+.library-heading { display: flex; align-items: start; justify-content: space-between; gap: 18px; }
+.library-heading h3 { margin: 6px 0 5px; font-size: 19px; letter-spacing: -.04em; }
+.library-heading p { max-width: 540px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.65; }
+.library-private { flex: 0 0 auto; color: var(--faint); font: 8px var(--mono); letter-spacing: .08em; padding-top: 3px; }
+.backup-actions { display: flex; gap: 8px; margin: 17px 0 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.backup-actions .button { min-height: 37px; font-size: 8px; }
+.question-editor { display: grid; gap: 12px; }
+.editor-form-heading, .custom-list-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.editor-form-heading strong, .custom-list-heading strong { color: #cbdde4; font: 9px var(--mono); letter-spacing: .1em; }
+.editor-form-heading span, .custom-list-heading span { color: var(--faint); font: 8px var(--mono); letter-spacing: .06em; }
+.editor-grid { display: grid; grid-template-columns: .75fr 1.25fr; gap: 10px; }
+.editor-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; color: #829aa8; font: 8px var(--mono); letter-spacing: .09em; }
+.editor-field input, .editor-field textarea {
+  width: 100%; min-width: 0; border: 1px solid rgba(141, 177, 196, .17); border-radius: 7px;
+  outline: 0; background: rgba(3, 17, 28, .58); color: var(--text);
+  padding: 10px 11px; font: 11px var(--font); letter-spacing: 0;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.editor-field input { height: 39px; }
+.editor-field textarea { min-height: 120px; resize: vertical; font: 10px/1.7 var(--mono); }
+.editor-field input:focus, .editor-field textarea:focus { border-color: rgba(105, 225, 208, .55); box-shadow: 0 0 0 3px rgba(105, 225, 208, .06); }
+.editor-field input::placeholder, .editor-field textarea::placeholder { color: #536d7b; }
+.editor-help { margin: -2px 0 0; color: var(--faint); font-size: 9px; line-height: 1.65; }
+.editor-help code { color: #a3c8c3; font-size: 9px; }
+.editor-submit-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.editor-submit-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.editor-submit-buttons .button { min-height: 39px; font-size: 8px; }
+#editor-feedback { color: var(--cyan); font-size: 10px; line-height: 1.5; }
+#editor-feedback.error { color: #edaa98; }
+#editor-feedback.success { color: #7bd6ba; }
+.custom-question-list-wrap { margin-top: 22px; padding-top: 17px; border-top: 1px solid var(--line); }
+.custom-list-heading { margin-bottom: 10px; }
+.custom-question-list { display: grid; gap: 7px; }
+.empty-library { margin: 4px 0 0; color: var(--faint); font-size: 10px; }
+.custom-question-item { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding: 11px 12px; border: 1px solid rgba(141, 177, 196, .1); border-radius: 7px; background: rgba(3, 17, 28, .35); }
+.custom-question-summary { display: grid; min-width: 0; gap: 3px; }
+.custom-question-summary strong { color: var(--cyan); font-size: 10px; }
+.custom-question-summary span { color: #c3d3dc; font-size: 10px; overflow-wrap: anywhere; }
+.custom-question-summary small { color: var(--faint); font: 8px var(--mono); }
+.custom-question-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 14px; }
+.custom-question-actions .text-button { font-size: 8px; }
+.danger-button { color: #ce9384; }
+.danger-button:hover { color: #ffb3a0; }
+@media (max-width: 650px) {
+  .library-panel { padding: 16px 13px; margin-bottom: 30px; }
+  .library-heading { flex-direction: column; gap: 7px; }
+  .library-private { padding: 0; }
+  .backup-actions { flex-wrap: wrap; }
+  .backup-actions .button { flex: 1 1 auto; }
+  .editor-grid { grid-template-columns: 1fr; }
+  .editor-submit-row { align-items: stretch; }
+  .editor-submit-buttons { width: 100%; }
+  .editor-submit-buttons .button { flex: 1 1 auto; }
+  #editor-feedback { flex: 1 1 100%; }
+  .custom-question-item { align-items: start; }
+  .custom-question-actions { flex-direction: column; align-items: end; gap: 8px; }
+}
