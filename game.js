@@ -380,7 +380,8 @@
         updateSetupSummary();
       });
       const name = document.createElement("span");
-      name.textContent = question.category;
+      const suffix = question.id === "pokemon" ? " · Pokémon" : question.id === "games" ? " · Jogos" : question.id === "countries" ? " · Países" : "";
+      name.textContent = question.category + suffix;
       label.append(checkbox, name);
       container.append(label);
     });
