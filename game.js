@@ -12,6 +12,7 @@
   const CUSTOM_QUESTIONS_KEY = "grillon.custom.questions.v1";
   const CAREER_STATS_KEY = "grillon.career.stats.v1";
   const DAILY_BEST_KEY = "grillon.daily.best.v1";
+  const GAME_HISTORY_KEY = "grillon.history.v1";
   const PREVIEW_SECONDS = 3;
   const CACHE_COUNTRIES = "grillon.countries.v1";
   const CACHE_POKEMON = "grillon.pokemon.v2";
@@ -234,6 +235,7 @@
   let categorySelection = null;
   let customAnswerBank = {};
   let careerStats = { games: 0, percentTotal: 0, rareAnswers: 0 };
+  let gameHistory = [];
   let currentMode = "practice";
   let dailyDateKey = "";
   let timerId = null;
@@ -731,13 +733,23 @@
     }
   }
 
+  function applyTheme(theme) {
+    const allowedThemes = ["ocean", "abyss", "coral"];
+    const selected = allowedThemes.includes(theme) ? theme : "ocean";
+    document.documentElement.dataset.theme = selected;
+    $("theme-select").value = selected;
+    return selected;
+  }
+
   function loadSettings() {
+    applyTheme("ocean");
     try {
       const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null");
       if (!saved || typeof saved !== "object") return;
       if ([5, 7, 10].includes(Number(saved.roundLength))) $("round-length").value = String(saved.roundLength);
       if ([15, 25, 40].includes(Number(saved.roundSeconds))) $("round-time").value = String(saved.roundSeconds);
       if (Array.isArray(saved.categories)) categorySelection = new Set(saved.categories.filter((id) => typeof id === "string"));
+      applyTheme(saved.theme);
     } catch (_) {}
   }
 
@@ -746,7 +758,8 @@
       localStorage.setItem(SETTINGS_KEY, JSON.stringify({
         roundLength: Number($("round-length").value) || DEFAULT_ROUND_LENGTH,
         roundSeconds: Number($("round-time").value) || DEFAULT_ROUND_SECONDS,
-        categories: categorySelection === null ? null : Array.from(categorySelection)
+        categories: categorySelection === null ? null : Array.from(categorySelection),
+        theme: document.documentElement.dataset.theme || "ocean"
       }));
     } catch (_) {}
   }
@@ -964,11 +977,13 @@
         settings: {
           roundLength: Number($("round-length").value) || DEFAULT_ROUND_LENGTH,
           roundSeconds: Number($("round-time").value) || DEFAULT_ROUND_SECONDS,
-          categories: categorySelection === null ? null : Array.from(categorySelection)
+          categories: categorySelection === null ? null : Array.from(categorySelection),
+          theme: document.documentElement.dataset.theme || "ocean"
         },
         customQuestions,
         customAnswers: customAnswerBank,
         careerStats,
+        gameHistory,
         bestPercent: getBestPercent(),
         dailyBest: readDailyBest()
       }
@@ -1025,6 +1040,7 @@
       const importedSettings = data.settings && typeof data.settings === "object" ? data.settings : {};
       const roundLengthValue = [5, 7, 10].includes(Number(importedSettings.roundLength)) ? Number(importedSettings.roundLength) : DEFAULT_ROUND_LENGTH;
       const roundSecondsValue = [15, 25, 40].includes(Number(importedSettings.roundSeconds)) ? Number(importedSettings.roundSeconds) : DEFAULT_ROUND_SECONDS;
+      const importedTheme = ["ocean", "abyss", "coral"].includes(importedSettings.theme) ? importedSettings.theme : "ocean";
       const importedCategories = Array.isArray(importedSettings.categories)
         ? importedSettings.categories.filter((id) => typeof id === "string").slice(0, 150)
         : null;
@@ -1035,6 +1051,7 @@
         rareAnswers: Math.max(0, Math.min(10000000, Number(stats.rareAnswers) || 0))
       };
       const safeBest = Math.max(0, Math.min(100, Number(data.bestPercent) || 0));
+      const importedHistory = sanitizeGameHistory(data.gameHistory);
       let safeDaily = null;
       if (data.dailyBest && typeof data.dailyBest.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(data.dailyBest.date)) {
         safeDaily = {
@@ -1045,7 +1062,7 @@
         };
       }
 
-      const backupKeys = [CUSTOM_QUESTIONS_KEY, CUSTOM_ANSWERS_KEY, SETTINGS_KEY, CAREER_STATS_KEY, BEST_KEY, DAILY_BEST_KEY];
+      const backupKeys = [CUSTOM_QUESTIONS_KEY, CUSTOM_ANSWERS_KEY, SETTINGS_KEY, CAREER_STATS_KEY, BEST_KEY, DAILY_BEST_KEY, GAME_HISTORY_KEY];
       const previousValues = new Map(backupKeys.map((key) => [key, localStorage.getItem(key)]));
       try {
         localStorage.setItem(CUSTOM_QUESTIONS_KEY, JSON.stringify(importedQuestions));
@@ -1053,9 +1070,11 @@
         localStorage.setItem(SETTINGS_KEY, JSON.stringify({
           roundLength: roundLengthValue,
           roundSeconds: roundSecondsValue,
-          categories: importedCategories
+          categories: importedCategories,
+          theme: importedTheme
         }));
         localStorage.setItem(CAREER_STATS_KEY, JSON.stringify(safeStats));
+        localStorage.setItem(GAME_HISTORY_KEY, JSON.stringify(importedHistory));
         localStorage.setItem(BEST_KEY, String(safeBest));
         if (safeDaily) localStorage.setItem(DAILY_BEST_KEY, JSON.stringify(safeDaily));
         else localStorage.removeItem(DAILY_BEST_KEY);
@@ -1079,6 +1098,8 @@
       });
       categorySelection = importedCategories === null ? null : new Set(importedCategories);
       careerStats = safeStats;
+      gameHistory = importedHistory;
+      applyTheme(importedTheme);
       $("round-length").value = String(roundLengthValue);
       $("round-time").value = String(roundSecondsValue);
       saveSettings();
@@ -1123,6 +1144,155 @@
     } catch (_) {}
   }
 
+  function sanitizeGameHistory(entries) {
+    if (!Array.isArray(entries)) return [];
+    return entries.slice(0, 200).map((entry) => {
+      if (!entry || typeof entry !== "object") return null;
+      const date = typeof entry.date === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(entry.date) ? entry.date : "";
+      const mode = entry.mode === "daily" ? "daily" : entry.mode === "practice" ? "practice" : "";
+      const maxScore = Math.max(100, Math.min(1000, Math.round(Number(entry.maxScore) || 0)));
+      const score = Math.max(0, Math.min(maxScore, Math.round(Number(entry.score) || 0)));
+      const questionCount = Math.max(1, Math.min(10, Math.round(Number(entry.questionCount) || 0)));
+      if (!date || !mode || !Number.isFinite(maxScore) || maxScore < 100 || !questionCount) return null;
+      const parsedTime = typeof entry.completedAt === "string" ? Date.parse(entry.completedAt) : NaN;
+      const completedAt = Number.isFinite(parsedTime) ? new Date(parsedTime).toISOString() : date + "T12:00:00.000Z";
+      return {
+        date,
+        mode,
+        score,
+        maxScore,
+        percent: Math.round((score / maxScore) * 100),
+        questionCount,
+        rareAnswers: Math.max(0, Math.min(10, Math.round(Number(entry.rareAnswers) || 0))),
+        legendaryAnswers: Math.max(0, Math.min(10, Math.round(Number(entry.legendaryAnswers) || 0))),
+        completedAt
+      };
+    }).filter(Boolean).sort((a, b) => Date.parse(b.completedAt) - Date.parse(a.completedAt)).slice(0, 50);
+  }
+
+  function loadGameHistory() {
+    try {
+      gameHistory = sanitizeGameHistory(JSON.parse(localStorage.getItem(GAME_HISTORY_KEY) || "[]"));
+    } catch (_) {
+      gameHistory = [];
+    }
+  }
+
+  function saveGameHistory() {
+    try {
+      localStorage.setItem(GAME_HISTORY_KEY, JSON.stringify(gameHistory.slice(0, 50)));
+    } catch (_) {
+      showToast("Não foi possível guardar o histórico. O armazenamento do navegador pode estar cheio.");
+    }
+  }
+
+  function dateKeyOffset(dateKey, offset) {
+    const date = new Date(dateKey + "T12:00:00Z");
+    if (!Number.isFinite(date.getTime())) return "";
+    date.setUTCDate(date.getUTCDate() + offset);
+    return date.toISOString().slice(0, 10);
+  }
+
+  function getDailyStreakSummary(history, todayKey) {
+    const dates = Array.from(new Set(history
+      .filter((entry) => entry && entry.mode === "daily" && /^\\d{4}-\\d{2}-\\d{2}$/.test(entry.date))
+      .map((entry) => entry.date))).sort();
+    const played = new Set(dates);
+    let anchor = played.has(todayKey) ? todayKey : dateKeyOffset(todayKey, -1);
+    let current = 0;
+    while (anchor && played.has(anchor)) {
+      current += 1;
+      anchor = dateKeyOffset(anchor, -1);
+    }
+    let best = 0;
+    let running = 0;
+    let previous = "";
+    dates.forEach((date) => {
+      running = previous && dateKeyOffset(previous, 1) === date ? running + 1 : 1;
+      best = Math.max(best, running);
+      previous = date;
+    });
+    return { current, best, completed: dates.length };
+  }
+
+  function renderCareerExtras() {
+    const streak = getDailyStreakSummary(gameHistory, getLisbonDateKey());
+    $("stat-daily-streak").textContent = streak.current + (streak.current === 1 ? " dia" : " dias");
+    $("daily-streak-note").textContent = streak.current
+      ? "Melhor sequência: " + streak.best + (streak.best === 1 ? " dia." : " dias.")
+      : "Completa o desafio de hoje para começar.";
+    $("stat-daily-games").textContent = String(streak.completed);
+
+    const achievements = [
+      { icon: "🌊", name: "Primeiro mergulho", detail: "Conclui a tua primeira ronda.", unlocked: careerStats.games >= 1 },
+      { icon: "🫧", name: "A fundo", detail: "Alcança pelo menos 80% numa ronda.", unlocked: gameHistory.some((entry) => entry.percent >= 80) },
+      { icon: "✨", name: "Resposta lendária", detail: "Consegue uma resposta de 100 pontos.", unlocked: gameHistory.some((entry) => entry.legendaryAnswers > 0) },
+      { icon: "💎", name: "Caçador de raridades", detail: "Consegue cinco respostas de 80+ pontos.", unlocked: careerStats.rareAnswers >= 5 },
+      { icon: "🎯", name: "Perfeccionista", detail: "Termina uma ronda com 100%.", unlocked: gameHistory.some((entry) => entry.percent === 100) },
+      { icon: "📆", name: "Rotina abissal", detail: "Completa o desafio diário três dias seguidos.", unlocked: streak.best >= 3 },
+      { icon: "🧭", name: "Veterano", detail: "Conclui dez rondas.", unlocked: careerStats.games >= 10 },
+      { icon: "🛠️", name: "Criador", detail: "Cria a tua primeira pergunta personalizada.", unlocked: customQuestions.length > 0 }
+    ];
+    const unlockedCount = achievements.filter((item) => item.unlocked).length;
+    $("achievement-progress").textContent = unlockedCount + "/" + achievements.length + " DESBLOQUEADAS";
+    const achievementList = $("achievement-list");
+    achievementList.replaceChildren();
+    achievements.forEach((item) => {
+      const card = document.createElement("article");
+      card.className = "achievement-card" + (item.unlocked ? " unlocked" : "");
+      const icon = document.createElement("span");
+      icon.className = "achievement-icon";
+      icon.textContent = item.unlocked ? item.icon : "◇";
+      const copy = document.createElement("div");
+      copy.className = "achievement-copy";
+      const name = document.createElement("strong");
+      name.textContent = item.name;
+      const detail = document.createElement("small");
+      detail.textContent = item.detail;
+      copy.append(name, detail);
+      const status = document.createElement("span");
+      status.className = "achievement-status";
+      status.textContent = item.unlocked ? "DESBLOQUEADA" : "BLOQUEADA";
+      card.append(icon, copy, status);
+      achievementList.append(card);
+    });
+
+    const historyList = $("game-history");
+    historyList.replaceChildren();
+    if (!gameHistory.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty-history";
+      empty.textContent = "As tuas rondas concluídas vão aparecer aqui.";
+      historyList.append(empty);
+      return;
+    }
+    gameHistory.slice(0, 5).forEach((entry) => {
+      const row = document.createElement("article");
+      row.className = "history-item";
+      const details = document.createElement("div");
+      details.className = "history-details";
+      const mode = document.createElement("strong");
+      mode.textContent = entry.mode === "daily" ? "DESAFIO DIÁRIO" : "TREINO LIVRE";
+      const date = document.createElement("small");
+      date.textContent = new Date(entry.completedAt).toLocaleDateString("pt-PT", { day: "2-digit", month: "short" });
+      details.append(mode, date);
+      const score = document.createElement("div");
+      score.className = "history-score";
+      const percent = document.createElement("strong");
+      percent.textContent = entry.percent + "%";
+      const points = document.createElement("small");
+      points.textContent = entry.score + " / " + entry.maxScore + " pts";
+      score.append(percent, points);
+      const meter = document.createElement("div");
+      meter.className = "history-meter";
+      const fill = document.createElement("span");
+      fill.style.width = entry.percent + "%";
+      meter.append(fill);
+      row.append(details, score, meter);
+      historyList.append(row);
+    });
+  }
+
   function saveCareerStats() {
     try { localStorage.setItem(CAREER_STATS_KEY, JSON.stringify(careerStats)); } catch (_) {}
   }
@@ -1132,13 +1302,29 @@
     $("stat-average").innerHTML = (careerStats.games ? Math.round(careerStats.percentTotal / careerStats.games) : 0) + "<small>%</small>";
     $("stat-best").innerHTML = getBestPercent() + "<small>%</small>";
     $("stat-rare").textContent = String(careerStats.rareAnswers);
+    renderCareerExtras();
   }
 
   function recordCareerGame(percent) {
     careerStats.games += 1;
     careerStats.percentTotal += percent;
-    careerStats.rareAnswers += currentResults.filter((item) => item.points >= 80).length;
+    const rareAnswers = currentResults.filter((item) => item.points >= 80).length;
+    const legendaryAnswers = currentResults.filter((item) => item.points === 100).length;
+    careerStats.rareAnswers += rareAnswers;
+    gameHistory.unshift({
+      date: currentMode === "daily" ? dailyDateKey : getLisbonDateKey(),
+      mode: currentMode,
+      score: totalScore,
+      maxScore: maxRoundScore,
+      percent,
+      questionCount: activeQuestions.length,
+      rareAnswers,
+      legendaryAnswers,
+      completedAt: new Date().toISOString()
+    });
+    gameHistory = gameHistory.slice(0, 50);
     saveCareerStats();
+    saveGameHistory();
     updateCareerStats();
   }
 
@@ -1584,6 +1770,10 @@
   $("daily-start-button").addEventListener("click", startDailyGame);
   $("round-length").addEventListener("change", () => { updateSetupSummary(); saveSettings(); });
   $("round-time").addEventListener("change", () => { updateSetupSummary(); saveSettings(); });
+  $("theme-select").addEventListener("change", () => {
+    applyTheme($("theme-select").value);
+    saveSettings();
+  });
   $("toggle-categories").addEventListener("click", () => {
     const container = $("category-options");
     container.hidden = !container.hidden;
@@ -1628,6 +1818,7 @@
   loadCustomAnswers();
   loadCustomQuestions();
   loadCareerStats();
+  loadGameHistory();
   renderCategoryOptions();
   renderCustomQuestionList();
   updateSetupSummary();
