@@ -46,7 +46,7 @@
       const bootstrap = [
         "<script>",
         "window.__smokeError = null;",
-        "window.addEventListener('error', event => { window.__smokeError = event.message || 'Erro JavaScript'; });",
+        "window.addEventListener('error', event => { if (event.message) window.__smokeError = event.message; });",
         "window.addEventListener('unhandledrejection', event => { window.__smokeError = String(event.reason || 'Promise rejeitada'); });",
         "window.fetch = async function(url) {",
         "  if (String(url).startsWith('https://restcountries.com/')) return { ok: true, json: async () => [",
