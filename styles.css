@@ -403,6 +403,7 @@ h1 span { color: var(--cyan); }
   font-size: 10px;
 }
 .custom-answer-controls .button-submit { min-height: 36px; min-width: 140px; padding: 0 10px; font-size: 8px; }
+.custom-answer-controls .button-secondary { min-height: 36px; padding: 0 10px; font-size: 8px; }
 .add-answer-button { color: var(--gold); font-size: 8px; }
 .add-answer-button:hover { color: #ffe0a2; }
 .answer-sheet-toggle {
