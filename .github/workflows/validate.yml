@@ -22,3 +22,5 @@ jobs:
         run: node --check game.js
       - name: Validate project structure
         run: node scripts/validate.mjs
+      - name: Smoke-test game runtime
+        run: node scripts/runtime-smoke.mjs
