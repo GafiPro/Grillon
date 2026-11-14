@@ -536,7 +536,16 @@
         updateSetupSummary();
       });
       const name = document.createElement("span");
-      const suffix = question.id === "pokemon" ? " · Pokémon" : question.id === "games" ? " · Jogos" : question.id === "countries" ? " · Países" : question.id === "clubs" ? " · Clubes" : question.id === "footballers" ? " · Jogadores" : "";
+      const suffixes = {
+        pokemon: " · Pokémon", games: " · Videojogos", countries: " · Países",
+        clubs: " · Clubes", footballers: " · Jogadores", artists: " · Artistas",
+        instruments: " · Instrumentos", "streaming-services": " · Streaming",
+        "web-browsers": " · Navegadores", cities: " · Cidades",
+        "rocket-league-cars": " · Rocket League", "minecraft-mobs": " · Minecraft",
+        consoles: " · Consolas", "programming-languages": " · Programação",
+        "smartphone-brands": " · Telemóveis"
+      };
+      const suffix = suffixes[question.id] || "";
       name.textContent = question.category + suffix;
       label.append(checkbox, name);
       container.append(label);
@@ -919,6 +928,7 @@
 
   function finishGame() {
     window.clearInterval(timerId);
+    window.clearInterval(previewId);
     const percent = maxRoundScore > 0 ? Math.round((totalScore / maxRoundScore) * 100) : 0;
     const previousBest = getBestPercent();
     const newRecord = percent > previousBest;
@@ -926,7 +936,9 @@
       try { localStorage.setItem(BEST_KEY, String(percent)); } catch (_) {}
     }
     updateBestScore();
-    renderResults(newRecord, percent);
+    recordCareerGame(percent);
+    const newDailyRecord = currentMode === "daily" ? saveDailyResult(percent) : false;
+    renderResults(newRecord, percent, newDailyRecord);
     showScreen("results");
   }
 
@@ -939,15 +951,19 @@
     return ["Mergulho em branco.", "A próxima ronda é uma nova oportunidade para encontrar respostas raras."];
   }
 
-  function renderResults(newRecord, percent) {
+  function renderResults(newRecord, percent, newDailyRecord) {
     $("final-score").textContent = String(totalScore);
     $("final-max-score").textContent = String(maxRoundScore);
-    $("final-depth").textContent = (percent * 70).toLocaleString("pt-PT");
+    $("final-percent").textContent = percent + "% DA PONTUAÇÃO MÁXIMA";
+    $("final-depth").textContent = (totalScore * 10).toLocaleString("pt-PT");
+    $("depth-max-label").textContent = (maxRoundScore * 10).toLocaleString("pt-PT") + " M";
     $("depth-meter-fill").style.width = percent + "%";
+    $("results-mode-label").textContent = currentMode === "daily" ? "DESAFIO DO DIA" : "RESULTADO DO TREINO";
     $("review-count").textContent = String(activeQuestions.length).padStart(2, "0") + " PERGUNTAS";
     const message = resultMessage(percent);
     $("result-title").textContent = message[0];
-    $("result-description").textContent = message[1] + (newRecord ? " Novo recorde pessoal!" : "");
+    $("result-description").textContent = message[1] + (newRecord ? " Novo recorde pessoal!" : "") +
+      (currentMode === "daily" ? (newDailyRecord ? " Novo melhor resultado diário!" : " Podes tentar melhorar o teu resultado diário.") : "");
     $("result-date").textContent = new Date().toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
 
     const list = $("review-list");
@@ -974,6 +990,36 @@
       }
       content.append(question, answer);
 
+      const reveal = document.createElement("button");
+      reveal.type = "button";
+      reveal.className = "answer-sheet-toggle";
+      reveal.textContent = "VER RESPOSTAS ACEITES (" + item.question.answers.length + ")";
+      reveal.setAttribute("aria-expanded", "false");
+
+      const answerSheet = document.createElement("div");
+      answerSheet.className = "answer-sheet";
+      answerSheet.hidden = true;
+      const sortedAnswers = item.question.answers.slice().sort((a, b) => a.points - b.points || a.name.localeCompare(b.name, "pt-PT"));
+      const visibleAnswers = sortedAnswers.slice(0, 12);
+      visibleAnswers.forEach((entry) => {
+        const answerItem = document.createElement("span");
+        answerItem.className = "answer-sheet-item" + (item.answer && normalise(item.answer) === normalise(entry.name) ? " chosen" : "");
+        answerItem.textContent = entry.name + " · " + entry.points;
+        answerSheet.append(answerItem);
+      });
+      if (sortedAnswers.length > visibleAnswers.length) {
+        const extra = document.createElement("span");
+        extra.className = "answer-sheet-extra";
+        extra.textContent = "Mais " + (sortedAnswers.length - visibleAnswers.length) + " respostas disponíveis";
+        answerSheet.append(extra);
+      }
+      reveal.addEventListener("click", () => {
+        answerSheet.hidden = !answerSheet.hidden;
+        reveal.setAttribute("aria-expanded", String(!answerSheet.hidden));
+        reveal.textContent = (answerSheet.hidden ? "VER" : "ESCONDER") + " RESPOSTAS ACEITES (" + item.question.answers.length + ")";
+      });
+      content.append(reveal, answerSheet);
+
       const score = document.createElement("div");
       score.className = "review-score" + (item.points === 0 ? " zero" : "");
       const scoreValue = document.createElement("strong");
@@ -995,10 +1041,39 @@
     toastTimer = window.setTimeout(() => toast.classList.remove("show"), 2200);
   }
 
+  async function copyResult() {
+    const percent = maxRoundScore ? Math.round((totalScore / maxRoundScore) * 100) : 0;
+    const label = currentMode === "daily" ? "Desafio diário" : "Treino livre";
+    const message = "🌊 GRILLON\n" + label + "\nPontuação: " + totalScore + "/" + maxRoundScore +
+      " (" + percent + "%)\nProfundidade: " + (totalScore * 10).toLocaleString("pt-PT") +
+      " m\nPerguntas: " + activeQuestions.length + "\nJoga também: https://gafipro.github.io/Grillon/";
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(message);
+      } else {
+        const field = document.createElement("textarea");
+        field.value = message;
+        field.style.position = "fixed";
+        field.style.opacity = "0";
+        document.body.append(field);
+        field.select();
+        const copied = document.execCommand("copy");
+        field.remove();
+        if (!copied) throw new Error("Não foi possível copiar");
+      }
+      showToast("Resultado copiado!");
+    } catch (_) {
+      showToast("Não foi possível copiar neste navegador.");
+    }
+  }
+
   function goHome() {
     window.clearInterval(timerId);
+    window.clearInterval(previewId);
     showScreen("home");
     updateBestScore();
+    updateCareerStats();
+    updateDailyStatus();
   }
 
   $("start-button").addEventListener("click", startGame);
