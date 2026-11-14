@@ -984,7 +984,7 @@
       const answer = document.createElement("div");
       answer.className = "review-answer";
       if (item.answer) {
-        answer.textContent = "Resposta: " + item.answer + " · " + item.tier;
+        answer.textContent = "Resposta: " + item.answer + " · " + item.tier + (item.custom ? " · Adicionada por ti" : "");
       } else {
         answer.textContent = item.reason === "tempo" ? "Tempo esgotado · Sem resposta válida" : "Pergunta passada · Sem resposta";
       }
