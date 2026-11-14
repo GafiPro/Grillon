@@ -424,7 +424,7 @@
         return;
       }
       if (name.length < 1 || name.length > 70) {
-        errors.push("Linha " + lineNumber + ": a resposta deve ter entre 2 e 70 caracteres.");
+        errors.push("Linha " + lineNumber + ": a resposta deve ter entre 1 e 70 caracteres.");
         return;
       }
       if (!POINTS.includes(points)) {
