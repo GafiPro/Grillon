@@ -8,6 +8,10 @@
   const BEST_KEY = "grillon.best.percent.v2";
   const LEGACY_BEST_KEY = "grillon.best.v1";
   const SETTINGS_KEY = "grillon.settings.v1";
+  const CUSTOM_ANSWERS_KEY = "grillon.custom.answers.v1";
+  const CAREER_STATS_KEY = "grillon.career.stats.v1";
+  const DAILY_BEST_KEY = "grillon.daily.best.v1";
+  const PREVIEW_SECONDS = 3;
   const CACHE_COUNTRIES = "grillon.countries.v1";
   const CACHE_POKEMON = "grillon.pokemon.v1";
 
@@ -218,13 +222,78 @@
   let roundSeconds = DEFAULT_ROUND_SECONDS;
   let maxRoundScore = DEFAULT_ROUND_LENGTH * 100;
   let categorySelection = null;
+  let customAnswerBank = {};
+  let careerStats = { games: 0, percentTotal: 0, rareAnswers: 0 };
+  let currentMode = "practice";
+  let dailyDateKey = "";
   let timerId = null;
+  let previewId = null;
   let locked = false;
   let toastTimer = null;
 
   function showScreen(name) {
     Object.keys(screens).forEach((key) => { screens[key].hidden = key !== name; });
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function getLisbonDateKey(date) {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Lisbon", year: "numeric", month: "2-digit", day: "2-digit"
+    }).formatToParts(date || new Date());
+    const values = {};
+    parts.forEach((part) => { values[part.type] = part.value; });
+    return values.year + "-" + values.month + "-" + values.day;
+  }
+
+  function hashSeed(value) {
+    let hash = 2166136261;
+    for (let i = 0; i < value.length; i += 1) {
+      hash ^= value.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+  }
+
+  function seededShuffle(array, seedText) {
+    const copy = array.slice();
+    let state = hashSeed(seedText);
+    function random() {
+      state += 0x6D2B79F5;
+      let value = state;
+      value = Math.imul(value ^ (value >>> 15), value | 1);
+      value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+      return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+    }
+    for (let i = copy.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  function loadCustomAnswers() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(CUSTOM_ANSWERS_KEY) || "{}");
+      customAnswerBank = saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+    } catch (_) { customAnswerBank = {}; }
+    questionPool.forEach(applyCustomAnswers);
+  }
+
+  function applyCustomAnswers(question) {
+    const extras = customAnswerBank[question.id];
+    if (!Array.isArray(extras)) return;
+    extras.slice(0, 100).forEach((entry) => {
+      if (!entry || typeof entry.name !== "string" || !Array.isArray(entry.aliases)) return;
+      const name = entry.name.trim().slice(0, 70);
+      const points = Number(entry.points);
+      if (!name || !POINTS.includes(points)) return;
+      const aliases = [name].concat(entry.aliases.filter((alias) => typeof alias === "string").slice(0, 8));
+      const key = normalise(name);
+      const exists = question.answers.some((answer) =>
+        answer.aliases.some((alias) => normalise(alias) === key)
+      );
+      if (!exists) question.answers.push({ name, points, aliases, custom: true });
+    });
   }
 
   function normalise(value) {
@@ -426,10 +495,12 @@
   async function loadExternalQuestions() {
     const results = await Promise.all([
       loadCountries().then((question) => {
+        applyCustomAnswers(question);
         questionPool = questionPool.filter((item) => item.id !== question.id).concat(question);
         return { ok: true, name: "REST Countries" };
       }).catch(() => ({ ok: false, name: "REST Countries" })),
       loadPokemon().then((question) => {
+        applyCustomAnswers(question);
         questionPool = questionPool.filter((item) => item.id !== question.id).concat(question);
         return { ok: true, name: "PokéAPI" };
       }).catch(() => ({ ok: false, name: "PokéAPI" }))
