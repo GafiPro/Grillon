@@ -862,10 +862,6 @@
     }
 
     customQuestions = nextQuestions;
-    if (!existing) {
-      careerStats.customCreated += 1;
-      saveCareerStats();
-    }
     questionPool = questionPool.filter((item) => item.id !== id);
     if (categorySelection !== null) categorySelection.delete(id);
     delete customAnswerBank[id];
@@ -944,6 +940,10 @@
     }
 
     customQuestions = nextQuestions;
+    if (!existing) {
+      careerStats.customCreated += 1;
+      saveCareerStats();
+    }
     questionPool = questionPool.filter((item) => item.id !== id);
     applyCustomAnswers(question);
     questionPool.push(question);
