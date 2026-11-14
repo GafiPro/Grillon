@@ -160,6 +160,7 @@
           <input id="import-data-file" type="file" accept="application/json,.json" hidden>
         </div>
         <form id="custom-question-form" class="question-editor" autocomplete="off">
+          <input id="editor-question-id" type="hidden">
           <div class="editor-form-heading"><strong>CRIAR UMA PERGUNTA</strong><span>APENAS NO TREINO LIVRE</span></div>
           <div class="editor-grid">
             <label class="editor-field"><span>NOME DA CATEGORIA</span><input id="editor-category" type="text" maxlength="38" placeholder="Ex.: Minecraft" required></label>
@@ -168,7 +169,7 @@
           <label class="editor-field"><span>DESCRIÇÃO / DICA (OPCIONAL)</span><input id="editor-subtitle" type="text" maxlength="180" placeholder="Ex.: Hostis, passivos ou neutros."></label>
           <label class="editor-field"><span>RESPOSTAS ACEITES</span><textarea id="editor-answers" rows="6" maxlength="7000" placeholder="Creeper | 5&#10;Warden | 80&#10;Sniffer | 100 | farejador" required></textarea></label>
           <p class="editor-help">Uma resposta por linha: <code>Resposta | pontos | alias1, alias2</code>. Os pontos permitidos são 5, 15, 30, 55, 80 e 100. Adiciona pelo menos duas respostas.</p>
-          <div class="editor-submit-row"><button class="button button-primary" type="submit">GUARDAR PERGUNTA <span aria-hidden="true">＋</span></button><span id="editor-feedback" role="status" aria-live="polite"></span></div>
+          <div class="editor-submit-row"><div class="editor-submit-buttons"><button class="button button-primary" id="editor-save-button" type="submit">GUARDAR PERGUNTA <span aria-hidden="true">＋</span></button><button class="button button-secondary" id="editor-cancel-button" type="button" hidden>SAIR DA EDIÇÃO</button></div><span id="editor-feedback" role="status" aria-live="polite"></span></div>
         </form>
         <div class="custom-question-list-wrap">
           <div class="custom-list-heading"><strong>AS TUAS CATEGORIAS</strong><span id="custom-question-count">0 perguntas</span></div>
