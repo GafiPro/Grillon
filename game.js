@@ -898,6 +898,7 @@
 
     customQuestions = nextQuestions;
     questionPool = questionPool.filter((item) => item.id !== id);
+    applyCustomAnswers(question);
     questionPool.push(question);
     renderCategoryOptions();
     renderCustomQuestionList();
