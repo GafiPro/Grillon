@@ -305,11 +305,22 @@
       const name = entry.name.trim().slice(0, 70);
       const points = Number(entry.points);
       if (name.length < 1 || !POINTS.includes(points)) return null;
-      const aliases = [name].concat(entry.aliases.filter((alias) => typeof alias === "string").map((alias) => alias.trim().slice(0, 70)).filter(Boolean).slice(0, 8));
-      for (const alias of aliases) {
+
+      const primaryKey = normalise(name);
+      if (!primaryKey || seen.has(primaryKey)) return null;
+      seen.add(primaryKey);
+      const aliases = [name];
+      const localAliases = new Set([primaryKey]);
+
+      for (const rawAlias of entry.aliases.filter((alias) => typeof alias === "string").slice(0, 16)) {
+        const alias = rawAlias.trim().slice(0, 70);
         const key = normalise(alias);
-        if (!key || seen.has(key)) return null;
+        if (!key || key === primaryKey) continue;
+        if (localAliases.has(key) || seen.has(key)) return null;
+        localAliases.add(key);
         seen.add(key);
+        aliases.push(alias);
+        if (aliases.length >= 9) break;
       }
       answers.push({ name, points, aliases, custom: true });
     }
