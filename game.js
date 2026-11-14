@@ -1165,11 +1165,17 @@
     }
   }
 
+  function isValidDateKey(value) {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const date = new Date(value + "T12:00:00Z");
+    return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+  }
+
   function sanitizeGameHistory(entries) {
     if (!Array.isArray(entries)) return [];
     return entries.slice(0, 200).map((entry) => {
       if (!entry || typeof entry !== "object") return null;
-      const date = typeof entry.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(entry.date) ? entry.date : "";
+      const date = isValidDateKey(entry.date) ? entry.date : "";
       const mode = entry.mode === "daily" ? "daily" : entry.mode === "practice" ? "practice" : "";
       const rawMaxScore = Math.round(Number(entry.maxScore));
       const rawQuestionCount = Math.round(Number(entry.questionCount));
@@ -1212,9 +1218,7 @@
 
   function sanitizeDailyDates(entries) {
     if (!Array.isArray(entries)) return [];
-    return Array.from(new Set(entries.filter((date) =>
-      typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)
-    ))).sort().slice(-4000);
+    return Array.from(new Set(entries.filter(isValidDateKey))).sort().slice(-4000);
   }
 
   function loadDailyDates() {
@@ -1270,7 +1274,7 @@
 
     const achievements = [
       { icon: "🌊", name: "Primeiro mergulho", detail: "Conclui a tua primeira ronda.", unlocked: careerStats.games >= 1 },
-      { icon: "🫧", name: "A fundo", detail: "Alcança pelo menos 80% numa ronda.", unlocked: gameHistory.some((entry) => entry.percent >= 80) },
+      { icon: "🫧", name: "A fundo", detail: "Alcança pelo menos 80% numa ronda.", unlocked: getBestPercent() >= 80 },
       { icon: "✨", name: "Resposta lendária", detail: "Consegue uma resposta de 100 pontos.", unlocked: careerStats.legendaryAnswers > 0 },
       { icon: "💎", name: "Caçador de raridades", detail: "Consegue cinco respostas de 80+ pontos.", unlocked: careerStats.rareAnswers >= 5 },
       { icon: "🎯", name: "Perfeccionista", detail: "Termina uma ronda com 100%.", unlocked: getBestPercent() === 100 },
