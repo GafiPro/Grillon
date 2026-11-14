@@ -1,39 +1,70 @@
 # Grillon
 
-Um quiz de respostas abertas em que as respostas menos óbvias valem mais pontos.
+Um quiz de respostas abertas em que as respostas menos óbvias valem mais pontos. Feito para jogar no navegador, sem conta e sem backend.
 
-## Como jogar
+## Modos de jogo
 
-1. Abre \`index.html\` num navegador ou publica o repositório com GitHub Pages.
-2. Antes da ronda, escolhe 5, 7 ou 10 perguntas e 15, 25 ou 40 segundos por pergunta.
-3. Abre **Escolher temas** para ativar apenas as categorias que queres. O jogo não repete categorias na mesma ronda; se escolheres menos temas do que perguntas, a ronda ajusta-se ao número de temas.
-4. Escreve uma resposta válida. Respostas mais raras valem mais pontos.
-5. No fim, consulta as respostas, a pontuação e a profundidade. O recorde é guardado como percentagem para comparar rondas de tamanhos diferentes. As tuas preferências de perguntas, tempo e temas também ficam guardadas neste navegador.
+### Desafio do dia
+
+- Sete perguntas fixas por dia, iguais para qualquer pessoa que abra a versão atual do jogo nesse dia.
+- A seleção é determinística e muda à meia-noite em Portugal continental.
+- Três segundos para ler cada pergunta antes de começar o temporizador.
+- 25 segundos para responder a cada pergunta.
+- Podes repetir o desafio; fica guardado o teu melhor resultado desse dia.
+
+O desafio diário usa as 26 categorias incluídas no projeto. Não depende de APIs externas, para que a seleção de perguntas seja estável durante o dia.
+
+### Treino livre
+
+- Escolhe 5, 7 ou 10 perguntas.
+- Escolhe 15, 25 ou 40 segundos por pergunta.
+- Ativa apenas as categorias que queres jogar.
+- O jogo escolhe uma pergunta por categoria, sem repetir temas na mesma ronda.
+
+Se selecionares menos categorias do que perguntas, a ronda ajusta-se ao número de categorias disponíveis.
 
 ## Pontuação
 
-Cada pergunta vale até 100 pontos. Os seis níveis são 5, 15, 30, 55, 80 e 100 pontos. A pontuação máxima da ronda adapta-se ao número de perguntas.
+Cada pergunta vale até 100 pontos, distribuídos por seis níveis: 5, 15, 30, 55, 80 e 100 pontos. A profundidade equivale à pontuação multiplicada por dez metros. O desafio diário chega aos 7 000 metros.
 
-Nas categorias incluídas no projeto, os níveis de raridade são definidos manualmente. Nas categorias externas, são estimados a partir de indicadores dos dados: população nos países e taxa de captura nos Pokémon. Estes indicadores não correspondem a estatísticas reais das respostas dos jogadores.
+Nas categorias incluídas no projeto, os níveis são definidos editorialmente. Nas categorias externas, são estimados a partir de indicadores dos dados: população nos países e taxa de captura nos Pokémon. Não representam estatísticas de respostas de jogadores.
 
-## Fontes de perguntas
+O recorde pessoal é guardado como percentagem, para permitir comparar rondas de tamanhos diferentes.
 
-- **Perguntas incluídas:** natureza, comida, clubes e futebolistas, gaming, cinema, motores, personagens, capitais, música, séries, desporto e tecnologia.
+## Categorias incluídas
+
+Natureza, fruta, clubes de futebol, futebolistas, videojogos, cinema, marcas de automóveis, personagens fictícias, capitais, artistas musicais, séries, modalidades desportivas, marcas de tecnologia, criaturas de Minecraft, carros do Rocket League, consolas, linguagens de programação, marcas de telemóveis, instrumentos musicais, serviços de streaming, jogos de tabuleiro, equipas de Fórmula 1, pratos de comida, navegadores de Internet, criaturas mitológicas e cidades.
+
+## APIs externas
+
 - **REST Countries:** lista de países, nomes alternativos e população.
 - **PokéAPI:** espécies Pokémon, nomes localizados e taxas de captura.
 
-As APIs são públicas e não exigem uma chave. Os dados são guardados no navegador durante 24 horas para reduzir pedidos repetidos. Se uma API falhar, as categorias incluídas continuam disponíveis.
+As APIs são públicas e não exigem uma chave. Os dados são guardados no navegador durante 24 horas para reduzir pedidos repetidos. Se uma API falhar, o jogo continua com as categorias incluídas.
 
-O banco de respostas não é uma lista universal de todas as respostas possíveis. A validação ignora acentos e pontuação, aceita algumas variantes de escrita e sugere correções simples, mas uma resposta válida que não esteja no banco pode continuar a ser rejeitada.
+## Respostas pessoais
 
-## Recorde e privacidade
+Quando uma resposta válida não é reconhecida, podes adicioná-la ao teu banco pessoal, confirmar que pertence à categoria e escolher o nível de raridade. A resposta fica guardada nesse navegador e passa a ser aceite nas rondas seguintes.
 
-O recorde fica guardado no \`localStorage\` do navegador. Não existe conta, servidor próprio nem envio de respostas pessoais. Limpar os dados do site no navegador também apaga o recorde e a cache das APIs.
+Depois de cada ronda, podes consultar a lista de respostas aceites de cada pergunta e ver a pontuação de cada uma.
 
-## Tecnologias
+O banco não é uma lista universal de todas as respostas possíveis. A normalização ignora acentos, artigos iniciais e pontuação comum, e sugere correções simples. Respostas ambíguas ou que não estejam no banco continuam a precisar de confirmação manual.
 
-HTML, CSS e JavaScript sem dependências de build, sem chaves de API e sem backend.
+## Estatísticas e privacidade
+
+O Grillon guarda no localStorage do navegador:
+- recorde pessoal e média de pontuação;
+- número de rondas e respostas com 80 ou mais pontos;
+- melhor resultado do desafio diário;
+- preferências de jogo e respostas pessoais adicionadas;
+- cache das APIs.
+
+Não existe conta, servidor próprio, leaderboard online ou envio das respostas. Limpar os dados do site no navegador remove estes dados.
 
 ## Executar localmente
 
-Basta abrir \`index.html\` no navegador. Para GitHub Pages, seleciona a branch \`main\` e a pasta raiz nas definições de Pages.
+Basta abrir index.html num navegador moderno. Para GitHub Pages, seleciona a branch main e a pasta raiz nas definições de Pages.
+
+## Validação
+
+O GitHub Actions executa uma verificação de sintaxe JavaScript e valida a estrutura e os elementos principais do projeto em cada push para main e em pull requests.
