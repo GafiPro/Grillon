@@ -207,7 +207,7 @@
       ["Lisboa", 5], ["Londres", 5], ["Paris", 5], ["Nova Iorque", 5, ["new york"]],
       ["Tóquio", 15, ["tokyo"]], ["Porto", 15], ["Barcelona", 15], ["Istambul", 30, ["istanbul"]],
       ["Osaka", 30], ["Marrakech", 30], ["Tallinn", 55], ["Tbilisi", 55], ["Tartu", 55],
-      ["Chiang Mai", 80], ["Ushuaia", 80], ["Samarkand", 80], ["Palau", 100], ["Gjirokastër", 100]
+      ["Chiang Mai", 80], ["Ushuaia", 80], ["Samarkand", 80], ["Ouagadougou", 100], ["Gjirokastër", 100]
     ])
   ];
 
@@ -297,11 +297,11 @@
   }
 
   function normalise(value) {
-    const words = String(value || "")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .match(/[a-z0-9]+/g) || [];
+    const raw = String(value || "").normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    const compact = raw.replace(/\s+/g, "");
+    if (/^[a-z][+#]{1,2}$/.test(compact)) return compact;
+    const words = raw.match(/[a-z0-9]+/g) || [];
     const articles = new Set(["the", "a", "an", "o", "os", "as", "um", "uma", "uns", "umas", "el", "la", "los", "las"]);
     if (words.length > 1 && articles.has(words[0])) words.shift();
     return words.join("");
@@ -1000,19 +1000,13 @@
       answerSheet.className = "answer-sheet";
       answerSheet.hidden = true;
       const sortedAnswers = item.question.answers.slice().sort((a, b) => a.points - b.points || a.name.localeCompare(b.name, "pt-PT"));
-      const visibleAnswers = sortedAnswers.slice(0, 12);
+      const visibleAnswers = sortedAnswers;
       visibleAnswers.forEach((entry) => {
         const answerItem = document.createElement("span");
         answerItem.className = "answer-sheet-item" + (item.answer && normalise(item.answer) === normalise(entry.name) ? " chosen" : "");
         answerItem.textContent = entry.name + " · " + entry.points;
         answerSheet.append(answerItem);
       });
-      if (sortedAnswers.length > visibleAnswers.length) {
-        const extra = document.createElement("span");
-        extra.className = "answer-sheet-extra";
-        extra.textContent = "Mais " + (sortedAnswers.length - visibleAnswers.length) + " respostas disponíveis";
-        answerSheet.append(extra);
-      }
       reveal.addEventListener("click", () => {
         answerSheet.hidden = !answerSheet.hidden;
         reveal.setAttribute("aria-expanded", String(!answerSheet.hidden));
