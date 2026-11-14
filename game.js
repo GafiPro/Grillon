@@ -13,6 +13,7 @@
   const CAREER_STATS_KEY = "grillon.career.stats.v1";
   const DAILY_BEST_KEY = "grillon.daily.best.v1";
   const GAME_HISTORY_KEY = "grillon.history.v1";
+  const DAILY_DATES_KEY = "grillon.daily.dates.v1";
   const PREVIEW_SECONDS = 3;
   const CACHE_COUNTRIES = "grillon.countries.v1";
   const CACHE_POKEMON = "grillon.pokemon.v2";
@@ -234,8 +235,9 @@
   let maxRoundScore = DEFAULT_ROUND_LENGTH * 100;
   let categorySelection = null;
   let customAnswerBank = {};
-  let careerStats = { games: 0, percentTotal: 0, rareAnswers: 0 };
+  let careerStats = { games: 0, percentTotal: 0, rareAnswers: 0, legendaryAnswers: 0, customCreated: 0 };
   let gameHistory = [];
+  let completedDailyDates = [];
   let currentMode = "practice";
   let dailyDateKey = "";
   let timerId = null;
@@ -860,6 +862,10 @@
     }
 
     customQuestions = nextQuestions;
+    if (!existing) {
+      careerStats.customCreated += 1;
+      saveCareerStats();
+    }
     questionPool = questionPool.filter((item) => item.id !== id);
     if (categorySelection !== null) categorySelection.delete(id);
     delete customAnswerBank[id];
@@ -944,6 +950,7 @@
     renderCategoryOptions();
     renderCustomQuestionList();
     updateSetupSummary();
+    updateCareerStats();
     resetQuestionEditor();
     setEditorFeedback(existing ? "Pergunta atualizada com sucesso." : "Pergunta criada com sucesso.", false);
     showToast(existing ? "Pergunta atualizada." : "Nova categoria adicionada ao treino.");
@@ -984,6 +991,7 @@
         customAnswers: customAnswerBank,
         careerStats,
         gameHistory,
+        dailyDates: completedDailyDates,
         bestPercent: getBestPercent(),
         dailyBest: readDailyBest()
       }
@@ -1048,10 +1056,13 @@
       const safeStats = {
         games: Math.max(0, Math.min(1000000, Number(stats.games) || 0)),
         percentTotal: Math.max(0, Math.min(100000000, Number(stats.percentTotal) || 0)),
-        rareAnswers: Math.max(0, Math.min(10000000, Number(stats.rareAnswers) || 0))
+        rareAnswers: Math.max(0, Math.min(10000000, Number(stats.rareAnswers) || 0)),
+        legendaryAnswers: Math.max(0, Math.min(10000000, Number(stats.legendaryAnswers) || 0)),
+        customCreated: Math.max(0, Math.min(100000, Number(stats.customCreated) || 0))
       };
       const safeBest = Math.max(0, Math.min(100, Number(data.bestPercent) || 0));
       const importedHistory = sanitizeGameHistory(data.gameHistory);
+      const importedDailyDates = sanitizeDailyDates(data.dailyDates);
       let safeDaily = null;
       if (data.dailyBest && typeof data.dailyBest.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(data.dailyBest.date)) {
         safeDaily = {
@@ -1062,7 +1073,7 @@
         };
       }
 
-      const backupKeys = [CUSTOM_QUESTIONS_KEY, CUSTOM_ANSWERS_KEY, SETTINGS_KEY, CAREER_STATS_KEY, BEST_KEY, DAILY_BEST_KEY, GAME_HISTORY_KEY];
+      const backupKeys = [CUSTOM_QUESTIONS_KEY, CUSTOM_ANSWERS_KEY, SETTINGS_KEY, CAREER_STATS_KEY, BEST_KEY, DAILY_BEST_KEY, GAME_HISTORY_KEY, DAILY_DATES_KEY];
       const previousValues = new Map(backupKeys.map((key) => [key, localStorage.getItem(key)]));
       try {
         localStorage.setItem(CUSTOM_QUESTIONS_KEY, JSON.stringify(importedQuestions));
@@ -1075,6 +1086,7 @@
         }));
         localStorage.setItem(CAREER_STATS_KEY, JSON.stringify(safeStats));
         localStorage.setItem(GAME_HISTORY_KEY, JSON.stringify(importedHistory));
+        localStorage.setItem(DAILY_DATES_KEY, JSON.stringify(importedDailyDates));
         localStorage.setItem(BEST_KEY, String(safeBest));
         if (safeDaily) localStorage.setItem(DAILY_BEST_KEY, JSON.stringify(safeDaily));
         else localStorage.removeItem(DAILY_BEST_KEY);
@@ -1099,6 +1111,7 @@
       categorySelection = importedCategories === null ? null : new Set(importedCategories);
       careerStats = safeStats;
       gameHistory = importedHistory;
+      completedDailyDates = importedDailyDates;
       applyTheme(importedTheme);
       $("round-length").value = String(roundLengthValue);
       $("round-time").value = String(roundSecondsValue);
@@ -1138,7 +1151,9 @@
         careerStats = {
           games: Math.max(0, Number(saved.games) || 0),
           percentTotal: Math.max(0, Number(saved.percentTotal) || 0),
-          rareAnswers: Math.max(0, Number(saved.rareAnswers) || 0)
+          rareAnswers: Math.max(0, Number(saved.rareAnswers) || 0),
+          legendaryAnswers: Math.max(0, Number(saved.legendaryAnswers) || 0),
+          customCreated: Math.max(0, Number(saved.customCreated) || 0)
         };
       }
     } catch (_) {}
@@ -1189,6 +1204,29 @@
     }
   }
 
+  function sanitizeDailyDates(entries) {
+    if (!Array.isArray(entries)) return [];
+    return Array.from(new Set(entries.filter((date) =>
+      typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)
+    ))).sort().slice(-4000);
+  }
+
+  function loadDailyDates() {
+    try {
+      completedDailyDates = sanitizeDailyDates(JSON.parse(localStorage.getItem(DAILY_DATES_KEY) || "[]"));
+    } catch (_) {
+      completedDailyDates = [];
+    }
+  }
+
+  function saveDailyDates() {
+    try {
+      localStorage.setItem(DAILY_DATES_KEY, JSON.stringify(completedDailyDates));
+    } catch (_) {
+      showToast("Não foi possível guardar a sequência diária.");
+    }
+  }
+
   function dateKeyOffset(dateKey, offset) {
     const date = new Date(dateKey + "T12:00:00Z");
     if (!Number.isFinite(date.getTime())) return "";
@@ -1196,10 +1234,8 @@
     return date.toISOString().slice(0, 10);
   }
 
-  function getDailyStreakSummary(history, todayKey) {
-    const dates = Array.from(new Set(history
-      .filter((entry) => entry && entry.mode === "daily" && /^\d{4}-\d{2}-\d{2}$/.test(entry.date))
-      .map((entry) => entry.date))).sort();
+  function getDailyStreakSummary(dailyDates, todayKey) {
+    const dates = sanitizeDailyDates(dailyDates);
     const played = new Set(dates);
     let anchor = played.has(todayKey) ? todayKey : dateKeyOffset(todayKey, -1);
     let current = 0;
@@ -1219,7 +1255,7 @@
   }
 
   function renderCareerExtras() {
-    const streak = getDailyStreakSummary(gameHistory, getLisbonDateKey());
+    const streak = getDailyStreakSummary(completedDailyDates, getLisbonDateKey());
     $("stat-daily-streak").textContent = streak.current + (streak.current === 1 ? " dia" : " dias");
     $("daily-streak-note").textContent = streak.current
       ? "Melhor sequência: " + streak.best + (streak.best === 1 ? " dia." : " dias.")
@@ -1229,12 +1265,12 @@
     const achievements = [
       { icon: "🌊", name: "Primeiro mergulho", detail: "Conclui a tua primeira ronda.", unlocked: careerStats.games >= 1 },
       { icon: "🫧", name: "A fundo", detail: "Alcança pelo menos 80% numa ronda.", unlocked: gameHistory.some((entry) => entry.percent >= 80) },
-      { icon: "✨", name: "Resposta lendária", detail: "Consegue uma resposta de 100 pontos.", unlocked: gameHistory.some((entry) => entry.legendaryAnswers > 0) },
+      { icon: "✨", name: "Resposta lendária", detail: "Consegue uma resposta de 100 pontos.", unlocked: careerStats.legendaryAnswers > 0 },
       { icon: "💎", name: "Caçador de raridades", detail: "Consegue cinco respostas de 80+ pontos.", unlocked: careerStats.rareAnswers >= 5 },
-      { icon: "🎯", name: "Perfeccionista", detail: "Termina uma ronda com 100%.", unlocked: gameHistory.some((entry) => entry.percent === 100) },
+      { icon: "🎯", name: "Perfeccionista", detail: "Termina uma ronda com 100%.", unlocked: getBestPercent() === 100 },
       { icon: "📆", name: "Rotina abissal", detail: "Completa o desafio diário três dias seguidos.", unlocked: streak.best >= 3 },
       { icon: "🧭", name: "Veterano", detail: "Conclui dez rondas.", unlocked: careerStats.games >= 10 },
-      { icon: "🛠️", name: "Criador", detail: "Cria a tua primeira pergunta personalizada.", unlocked: customQuestions.length > 0 }
+      { icon: "🛠️", name: "Criador", detail: "Cria a tua primeira pergunta personalizada.", unlocked: careerStats.customCreated > 0 }
     ];
     const unlockedCount = achievements.filter((item) => item.unlocked).length;
     $("achievement-progress").textContent = unlockedCount + "/" + achievements.length + " DESBLOQUEADAS";
@@ -1314,6 +1350,12 @@
     const rareAnswers = currentResults.filter((item) => item.points >= 80).length;
     const legendaryAnswers = currentResults.filter((item) => item.points === 100).length;
     careerStats.rareAnswers += rareAnswers;
+    careerStats.legendaryAnswers += legendaryAnswers;
+    if (currentMode === "daily" && dailyDateKey && !completedDailyDates.includes(dailyDateKey)) {
+      completedDailyDates.push(dailyDateKey);
+      completedDailyDates = sanitizeDailyDates(completedDailyDates);
+      saveDailyDates();
+    }
     gameHistory.unshift({
       date: currentMode === "daily" ? dailyDateKey : getLisbonDateKey(),
       mode: currentMode,
@@ -1824,6 +1866,7 @@
   loadCustomQuestions();
   loadCareerStats();
   loadGameHistory();
+  loadDailyDates();
   renderCategoryOptions();
   renderCustomQuestionList();
   updateSetupSummary();
