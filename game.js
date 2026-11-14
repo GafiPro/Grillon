@@ -970,9 +970,16 @@
       }
 
       const data = backup.data;
-      const importedQuestions = Array.isArray(data.customQuestions)
-        ? data.customQuestions.map(sanitizeCustomQuestion).filter(Boolean).slice(0, 100)
-        : [];
+      const importedQuestionMap = new Map();
+      if (Array.isArray(data.customQuestions)) {
+        data.customQuestions.forEach((entry) => {
+          const clean = sanitizeCustomQuestion(entry);
+          if (clean && !importedQuestionMap.has(clean.id) && importedQuestionMap.size < 100) {
+            importedQuestionMap.set(clean.id, clean);
+          }
+        });
+      }
+      const importedQuestions = Array.from(importedQuestionMap.values());
       const importedAnswers = sanitizeCustomAnswerBank(data.customAnswers);
       const importedSettings = data.settings && typeof data.settings === "object" ? data.settings : {};
       const roundLengthValue = [5, 7, 10].includes(Number(importedSettings.roundLength)) ? Number(importedSettings.roundLength) : DEFAULT_ROUND_LENGTH;
