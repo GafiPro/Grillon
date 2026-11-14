@@ -289,6 +289,57 @@
     questionPool.forEach(applyCustomAnswers);
   }
 
+  function sanitizeCustomQuestion(input) {
+    if (!input || typeof input !== "object") return null;
+    const id = typeof input.id === "string" ? input.id.slice(0, 90) : "";
+    const category = typeof input.category === "string" ? input.category.trim().slice(0, 38) : "";
+    const title = typeof input.title === "string" ? input.title.trim().slice(0, 110) : "";
+    const subtitle = typeof input.subtitle === "string" ? input.subtitle.trim().slice(0, 180) : "";
+    if (!id.startsWith("custom-") || !category || !title || !Array.isArray(input.answers)) return null;
+    if (input.answers.length < 2 || input.answers.length > 100) return null;
+
+    const seen = new Set();
+    const answers = [];
+    for (const entry of input.answers) {
+      if (!entry || typeof entry.name !== "string" || !Array.isArray(entry.aliases)) return null;
+      const name = entry.name.trim().slice(0, 70);
+      const points = Number(entry.points);
+      if (name.length < 2 || !POINTS.includes(points)) return null;
+      const aliases = [name].concat(entry.aliases.filter((alias) => typeof alias === "string").map((alias) => alias.trim().slice(0, 70)).filter(Boolean).slice(0, 8));
+      for (const alias of aliases) {
+        const key = normalise(alias);
+        if (!key || seen.has(key)) return null;
+        seen.add(key);
+      }
+      answers.push({ name, points, aliases, custom: true });
+    }
+    return { id, category, title, subtitle, source: "Pergunta pessoal", answers };
+  }
+
+  function loadCustomQuestions() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(CUSTOM_QUESTIONS_KEY) || "[]");
+      customQuestions = Array.isArray(saved) ? saved.map(sanitizeCustomQuestion).filter(Boolean).slice(0, 100) : [];
+    } catch (_) { customQuestions = []; }
+
+    const existingIds = new Set(questionPool.map((question) => question.id));
+    customQuestions = customQuestions.filter((question) => !existingIds.has(question.id));
+    customQuestions.forEach((question) => {
+      applyCustomAnswers(question);
+      questionPool.push(question);
+    });
+  }
+
+  function saveCustomQuestions() {
+    try {
+      localStorage.setItem(CUSTOM_QUESTIONS_KEY, JSON.stringify(customQuestions));
+      return true;
+    } catch (_) {
+      showToast("Não foi possível guardar as perguntas. O armazenamento do navegador pode estar cheio.");
+      return false;
+    }
+  }
+
   function applyCustomAnswers(question) {
     const extras = customAnswerBank[question.id];
     if (!Array.isArray(extras)) return;
@@ -315,6 +366,64 @@
     const articles = new Set(["the", "a", "an", "o", "os", "as", "um", "uma", "uns", "umas", "el", "la", "los", "las"]);
     if (words.length > 1 && articles.has(words[0])) words.shift();
     return words.join("");
+  }
+
+  function parseAnswerLines(text) {
+    const answers = [];
+    const errors = [];
+    const usedAliases = new Map();
+    const lines = String(text || "").split(/\r?\n/);
+
+    lines.forEach((rawLine, index) => {
+      const line = rawLine.trim();
+      if (!line) return;
+      const fields = line.split("|").map((part) => part.trim());
+      const name = fields[0] || "";
+      const points = Number(fields[1]);
+      const aliases = (fields[2] || "").split(",").map((alias) => alias.trim()).filter(Boolean);
+      const lineNumber = index + 1;
+
+      if (fields.length > 3) {
+        errors.push("Linha " + lineNumber + ": usa no máximo três campos separados por |.");
+        return;
+      }
+      if (name.length < 2 || name.length > 70) {
+        errors.push("Linha " + lineNumber + ": a resposta deve ter entre 2 e 70 caracteres.");
+        return;
+      }
+      if (!POINTS.includes(points)) {
+        errors.push("Linha " + lineNumber + ": os pontos têm de ser 5, 15, 30, 55, 80 ou 100.");
+        return;
+      }
+      if (aliases.some((alias) => alias.length > 70)) {
+        errors.push("Linha " + lineNumber + ": cada alias pode ter no máximo 70 caracteres.");
+        return;
+      }
+
+      const allAliases = [name].concat(aliases);
+      let duplicate = false;
+      for (const alias of allAliases) {
+        const key = normalise(alias);
+        if (!key) {
+          errors.push("Linha " + lineNumber + ": foi encontrado um alias vazio ou inválido.");
+          duplicate = true;
+          break;
+        }
+        if (usedAliases.has(key)) {
+          errors.push("Linha " + lineNumber + ": «" + alias + "» repete uma resposta ou alias já usado.");
+          duplicate = true;
+          break;
+        }
+      }
+      if (duplicate) return;
+
+      allAliases.forEach((alias) => usedAliases.set(normalise(alias), name));
+      answers.push({ name, points, aliases: allAliases, custom: true });
+    });
+
+    if (answers.length < 2) errors.push("Adiciona pelo menos duas respostas válidas.");
+    if (answers.length > 100) errors.push("Uma pergunta pode ter no máximo 100 respostas.");
+    return { answers: answers, errors: errors };
   }
 
   function tierName(points) {
