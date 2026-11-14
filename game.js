@@ -1,0 +1,545 @@
+"use strict";
+
+(function () {
+  const POINTS = [5, 15, 30, 55, 80, 100];
+  const TIER_NAMES = ["Comum", "Conhecida", "Incomum", "Rara", "Abissal", "Lendária"];
+  const ROUND_LENGTH = 7;
+  const ROUND_SECONDS = 25;
+  const BEST_KEY = "grillon.best.v1";
+  const CACHE_COUNTRIES = "grillon.countries.v1";
+  const CACHE_POKEMON = "grillon.pokemon.v1";
+
+  const $ = (id) => document.getElementById(id);
+  const screens = {
+    home: $("home-screen"),
+    game: $("game-screen"),
+    results: $("results-screen")
+  };
+
+  function makeQuestion(id, category, title, subtitle, rows, source) {
+    return {
+      id: id,
+      category: category,
+      title: title,
+      subtitle: subtitle,
+      source: source || "Grillon",
+      answers: rows.map((row) => ({
+        name: row[0],
+        points: row[1],
+        aliases: [row[0]].concat(row[2] || [])
+      }))
+    };
+  }
+
+  const BUILTIN_QUESTIONS = [
+    makeQuestion("animals", "Natureza", "Diz o nome de um animal.", "Pode ser qualquer animal. Tenta fugir aos exemplos mais óbvios.", [
+      ["Cão", 5, ["cachorro", "dog"]], ["Gato", 5, ["cat"]], ["Leão", 15, ["lion"]], ["Elefante", 15, ["elephant"]],
+      ["Tubarão", 30, ["tubarao", "shark"]], ["Pinguim", 30, ["penguin"]], ["Axolote", 55, ["axolotl", "ajolote"]],
+      ["Ornitorrinco", 55, ["platypus"]], ["Ocapi", 80, ["okapi"]], ["Narval", 80, ["narwhal"]],
+      ["Saola", 100], ["Aye-aye", 100, ["ai ai", "aye aye"]], ["Quokka", 55], ["Lémure", 30, ["lemur"]]
+    ]),
+    makeQuestion("fruit", "Comida", "Diz o nome de uma fruta.", "Há frutas bem conhecidas e outras que quase ninguém se lembra de nomear.", [
+      ["Maçã", 5, ["maca", "apple"]], ["Banana", 5], ["Laranja", 5, ["orange"]], ["Manga", 15, ["mango"]],
+      ["Ananás", 15, ["abacaxi", "pineapple"]], ["Kiwi", 15], ["Figo", 30, ["fig"]], ["Romã", 30, ["roma", "pomegranate"]],
+      ["Maracujá", 30, ["passion fruit"]], ["Líchia", 55, ["lichia", "lychee"]], ["Pitaya", 55, ["fruta do dragao", "dragon fruit"]],
+      ["Tamarindo", 55, ["tamarind"]], ["Rambutão", 80, ["rambutan"]], ["Mangostão", 80, ["mangosteen"]],
+      ["Salak", 100, ["snake fruit"]], ["Durião", 100, ["durian"]]
+    ]),
+    makeQuestion("clubs", "Futebol", "Diz o nome de um clube de futebol.", "Escolhe um clube de qualquer país ou divisão.", [
+      ["Real Madrid", 5], ["Barcelona", 5], ["Benfica", 5, ["sport lisboa e benfica", "sl benfica"]],
+      ["Sporting", 15, ["sporting cp", "sporting clube de portugal"]], ["FC Porto", 15, ["porto", "futebol clube do porto"]],
+      ["Manchester United", 15, ["man utd"]], ["Liverpool", 30], ["Arsenal", 30], ["Bayern Munique", 30, ["bayern munich", "bayern"]],
+      ["Ajax", 55, ["ajax amsterdam"]], ["Borussia Dortmund", 55, ["dortmund"]], ["Napoli", 55, ["ssc napoli"]],
+      ["Celtic", 80, ["celtic glasgow"]], ["Bodø/Glimt", 80, ["bodo glimt", "bodø glimt"]],
+      ["Qarabağ", 100, ["qarabag"]], ["FC Midtjylland", 100, ["midtjylland"]]
+    ]),
+    makeQuestion("footballers", "Futebol", "Diz o nome de um futebolista.", "Pode estar no ativo ou já ter terminado a carreira.", [
+      ["Cristiano Ronaldo", 5, ["cr7", "ronaldo"]], ["Lionel Messi", 5, ["messi"]], ["Kylian Mbappé", 15, ["mbappe"]],
+      ["Neymar", 15], ["Erling Haaland", 15, ["haaland"]], ["Mohamed Salah", 30, ["salah"]],
+      ["Luka Modrić", 30, ["modric"]], ["Jude Bellingham", 30, ["bellingham"]], ["Son Heung-min", 55, ["son"]],
+      ["Viktor Gyökeres", 55, ["gyokeres"]], ["Khvicha Kvaratskhelia", 80, ["kvaratskhelia", "kvara"]],
+      ["Takefusa Kubo", 80, ["kubo"]], ["Victor Osimhen", 80, ["osimhen"]],
+      ["Hakan Çalhanoğlu", 100, ["calhanoglu"]], ["Ángel Di María", 55, ["di maria"]]
+    ]),
+    makeQuestion("games", "Gaming", "Diz o nome de um videojogo.", "Vale qualquer jogo lançado para computador, consola ou telemóvel.", [
+      ["Minecraft", 5], ["Fortnite", 5], ["Roblox", 5], ["Grand Theft Auto V", 15, ["gta v", "gta 5", "grand theft auto 5"]],
+      ["Rocket League", 15], ["Valorant", 30], ["The Sims", 30, ["sims"]], ["Terraria", 55],
+      ["Stardew Valley", 55], ["Hollow Knight", 80], ["Outer Wilds", 80], ["Hades", 30],
+      ["Tunic", 100], ["Rain World", 100], ["Return of the Obra Dinn", 100, ["obra dinn"]]
+    ]),
+    makeQuestion("films", "Cinema", "Diz o nome de um filme.", "Animação, ficção científica, comédia, terror... tudo conta.", [
+      ["Titanic", 5], ["Avatar", 5], ["Frozen", 5, ["frozen o reino do gelo"]], ["The Avengers", 15, ["avengers", "vingadores"]],
+      ["Star Wars", 15], ["Interstellar", 30, ["interestelar"]], ["Inception", 30, ["a origem"]], ["Coco", 30],
+      ["Whiplash", 55], ["Parasitas", 55, ["parasite"]], ["Arrival", 55, ["o primeiro encontro"]], ["Oldboy", 80],
+      ["The Lighthouse", 80], ["Paprika", 100], ["Stalker", 100], ["A Viagem de Chihiro", 30, ["spirited away"]]
+    ]),
+    makeQuestion("cars", "Motores", "Diz o nome de uma marca de automóveis.", "Marcas atuais, antigas, populares ou bastante exclusivas.", [
+      ["Toyota", 5], ["BMW", 5], ["Mercedes-Benz", 5, ["mercedes"]], ["Ferrari", 15], ["Lamborghini", 15, ["lambo"]],
+      ["Porsche", 15], ["Volvo", 30], ["Subaru", 30], ["McLaren", 30, ["mclaren"]], ["Pagani", 55],
+      ["Koenigsegg", 55], ["Cupra", 55], ["Rimac", 80], ["Zenvo", 80], ["Wiesmann", 100],
+      ["Hispano Suiza", 100, ["hispano-suiza"]]
+    ]),
+    makeQuestion("characters", "Personagens", "Diz o nome de uma personagem fictícia.", "Pode vir de filmes, séries, livros, banda desenhada ou videojogos.", [
+      ["Spider-Man", 5, ["homem aranha", "spiderman"]], ["Batman", 5], ["Superman", 5, ["super homem"]],
+      ["Shrek", 15], ["Elsa", 15], ["Sonic", 15], ["Link", 30, ["the legend of zelda link"]],
+      ["Kratos", 30], ["Geralt de Rívia", 30, ["geralt", "geralt of rivia"]], ["Totoro", 55],
+      ["WALL-E", 55, ["walle"]], ["Baymax", 55], ["Samus Aran", 80, ["samus"]],
+      ["GLaDOS", 80, ["glados"]], ["Hornet", 100], ["Fawful", 100]
+    ])
+  ];
+
+  let questionPool = BUILTIN_QUESTIONS.slice();
+  let activeQuestions = [];
+  let currentIndex = 0;
+  let currentQuestion = null;
+  let currentResults = [];
+  let totalScore = 0;
+  let remaining = ROUND_SECONDS;
+  let timerId = null;
+  let locked = false;
+  let toastTimer = null;
+
+  function showScreen(name) {
+    Object.keys(screens).forEach((key) => { screens[key].hidden = key !== name; });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function normalise(value) {
+    return String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+  }
+
+  function tierName(points) {
+    const index = POINTS.indexOf(points);
+    return index < 0 ? "Sem pontos" : TIER_NAMES[index];
+  }
+
+  function shuffle(array) {
+    const copy = array.slice();
+    for (let i = copy.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = copy[i];
+      copy[i] = copy[j];
+      copy[j] = temp;
+    }
+    return copy;
+  }
+
+  function readCache(key, maxAgeMs) {
+    try {
+      const item = JSON.parse(localStorage.getItem(key) || "null");
+      if (item && item.savedAt && Date.now() - item.savedAt < maxAgeMs && item.data) return item.data;
+    } catch (_) {}
+    return null;
+  }
+
+  function writeCache(key, data) {
+    try { localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), data: data })); } catch (_) {}
+  }
+
+  async function fetchJson(url, timeoutMs) {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), timeoutMs || 12000);
+    try {
+      const response = await fetch(url, { signal: controller.signal, headers: { "Accept": "application/json" } });
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      return await response.json();
+    } finally {
+      window.clearTimeout(timer);
+    }
+  }
+
+  async function mapLimit(items, limit, mapper) {
+    const output = new Array(items.length);
+    let next = 0;
+    const workers = Array.from({ length: Math.min(limit, items.length) }, async function () {
+      while (next < items.length) {
+        const index = next++;
+        try { output[index] = await mapper(items[index], index); }
+        catch (_) { output[index] = null; }
+      }
+    });
+    await Promise.all(workers);
+    return output.filter(Boolean);
+  }
+
+  function uniqueStrings(values) {
+    const seen = new Set();
+    const result = [];
+    values.forEach((value) => {
+      if (!value || typeof value !== "string") return;
+      const text = value.trim();
+      const key = normalise(text);
+      if (key.length < 2 || seen.has(key)) return;
+      seen.add(key);
+      result.push(text);
+    });
+    return result;
+  }
+
+  function rarityByRank(index, total) {
+    if (total <= 1) return 100;
+    const fromRareEnd = 1 - (index / (total - 1));
+    const tier = Math.max(0, Math.min(5, Math.floor(fromRareEnd * 6)));
+    return POINTS[tier];
+  }
+
+  async function loadCountries() {
+    let countries = readCache(CACHE_COUNTRIES, 24 * 60 * 60 * 1000);
+    if (!countries) {
+      countries = await fetchJson("https://restcountries.com/v3.1/all?fields=name,population,translations,cca3,altSpellings", 15000);
+      if (!Array.isArray(countries)) throw new Error("Resposta de países inválida");
+      writeCache(CACHE_COUNTRIES, countries);
+    }
+
+    const valid = countries.filter((country) => country && country.name && country.name.common);
+    valid.sort((a, b) => (Number(a.population) || 0) - (Number(b.population) || 0));
+    const answers = valid.map((country, index) => {
+      const portuguese = country.translations && country.translations.por ? country.translations.por.common : "";
+      const officialPortuguese = country.translations && country.translations.por ? country.translations.por.official : "";
+      const aliases = uniqueStrings([
+        country.name.common, country.name.official, portuguese, officialPortuguese,
+        ...(country.altSpellings || []), country.cca3
+      ]);
+      return { name: portuguese || country.name.common, points: rarityByRank(index, valid.length), aliases: aliases };
+    });
+    return {
+      id: "countries", category: "Geografia", title: "Diz o nome de um país.",
+      subtitle: "Qualquer país reconhecido conta. A raridade é estimada através da dimensão da população.",
+      source: "REST Countries", answers: answers
+    };
+  }
+
+  const POKEMON_IDS = [
+    1, 4, 7, 25, 39, 52, 54, 74, 94, 104, 113, 123, 130, 133, 143, 149, 150, 151,
+    172, 196, 197, 212, 214, 243, 244, 245, 249, 250, 251, 252, 255, 258, 282, 292,
+    302, 303, 306, 330, 333, 350, 359, 361, 374, 376, 380, 381, 384, 385, 386,
+    393, 448, 470, 471, 475, 487, 491, 492, 493, 570, 571, 574, 575, 576, 609,
+    612, 633, 635, 638, 639, 640, 643, 644, 646, 647, 648, 649, 650, 658, 700,
+    716, 717, 718, 722, 724, 725, 728, 745, 778, 800, 801, 802, 808, 809, 888,
+    889, 890, 891, 892, 893, 894, 895, 896, 897, 898, 899, 900, 1000
+  ];
+
+  const POKEMON_PORTUGUESE = {
+    "bulbasaur": ["Bulbasaur"], "ivysaur": ["Ivysaur"], "venusaur": ["Venusaur"],
+    "charmander": ["Charmander"], "charmeleon": ["Charmeleon"], "charizard": ["Charizard"],
+    "squirtle": ["Squirtle"], "wartortle": ["Wartortle"], "blastoise": ["Blastoise"],
+    "pikachu": ["Pikachu"], "raichu": ["Raichu"], "meowth": ["Miau"],
+    "psyduck": ["Psyduck"], "gengar": ["Gengar"], "snorlax": ["Snorlax"],
+    "mewtwo": ["Mewtwo"], "mew": ["Mew"], "eevee": ["Eevee"], "vaporeon": ["Vaporeon"],
+    "jolteon": ["Jolteon"], "flareon": ["Flareon"], "articuno": ["Articuno"],
+    "zapdos": ["Zapdos"], "moltres": ["Moltres"], "dratini": ["Dratini"],
+    "dragonite": ["Dragonite"], "lugia": ["Lugia"], "ho-oh": ["Ho-Oh"],
+    "celebi": ["Celebi"], "gardevoir": ["Gardevoir"], "lucario": ["Lucario"],
+    "greninja": ["Greninja"], "rowlet": ["Rowlet"], "mimikyu": ["Mimikyu"],
+    "zeraora": ["Zeraora"], "zacian": ["Zacian"], "zamazenta": ["Zamazenta"],
+    "sprigatito": ["Sprigatito"], "fuecoco": ["Fuecoco"], "quaxly": ["Quaxly"]
+  };
+
+  async function loadPokemon() {
+    let pokemon = readCache(CACHE_POKEMON, 24 * 60 * 60 * 1000);
+    if (!pokemon) {
+      const list = await fetchJson("https://pokeapi.co/api/v2/pokemon-species?limit=1025", 15000);
+      if (!list || !Array.isArray(list.results)) throw new Error("Lista Pokémon indisponível");
+      const available = list.results;
+      const byId = new Map();
+      available.forEach((entry) => {
+        const match = entry.url.match(/\/pokemon-species\/(\d+)\/?$/);
+        if (match) byId.set(Number(match[1]), entry);
+      });
+      const ids = uniqueStrings(POKEMON_IDS.map(String)).map(Number).filter((id) => byId.has(id));
+      const selected = shuffle(ids).slice(0, 52);
+      pokemon = await mapLimit(selected, 8, async (id) => {
+        return await fetchJson("https://pokeapi.co/api/v2/pokemon-species/" + id + "/", 12000);
+      });
+      writeCache(CACHE_POKEMON, pokemon);
+    }
+
+    const entries = pokemon.map((species) => {
+      if (!species || !species.name) return null;
+      const englishName = species.name.replace(/-/g, " ");
+      const translations = (species.names || []).filter((item) => item && item.name).map((item) => item.name);
+      const aliases = uniqueStrings([englishName, species.name, ...(POKEMON_PORTUGUESE[species.name] || []), ...translations]);
+      return { name: (POKEMON_PORTUGUESE[species.name] || [englishName])[0], captureRate: Number(species.capture_rate) || 120, aliases: aliases };
+    }).filter(Boolean);
+
+    entries.sort((a, b) => a.captureRate - b.captureRate);
+    const answers = entries.map((entry, index) => ({
+      name: entry.name,
+      points: rarityByRank(index, entries.length),
+      aliases: entry.aliases
+    }));
+
+    return {
+      id: "pokemon", category: "Gaming", title: "Diz o nome de um Pokémon.",
+      subtitle: "Vale qualquer Pokémon desta seleção. Os pontos estimam a raridade através da taxa de captura no jogo.",
+      source: "PokéAPI", answers: answers
+    };
+  }
+
+  function updateApiStatus(results) {
+    const status = $("api-status");
+    const text = $("api-status-text");
+    const connected = results.filter((item) => item.ok).map((item) => item.name);
+    const failed = results.filter((item) => !item.ok).map((item) => item.name);
+    if (connected.length === 2) {
+      status.classList.add("ready");
+      text.textContent = "APIs ligadas: REST Countries + PokéAPI";
+    } else if (connected.length === 1) {
+      status.classList.add("partial");
+      text.textContent = "API ligada: " + connected[0] + (failed.length ? " · outra indisponível" : "");
+    } else {
+      status.classList.add("partial");
+      text.textContent = "A usar perguntas incluídas no Grillon · APIs indisponíveis";
+    }
+  }
+
+  async function loadExternalQuestions() {
+    const results = await Promise.all([
+      loadCountries().then((question) => {
+        questionPool = questionPool.filter((item) => item.id !== question.id).concat(question);
+        return { ok: true, name: "REST Countries" };
+      }).catch(() => ({ ok: false, name: "REST Countries" })),
+      loadPokemon().then((question) => {
+        questionPool = questionPool.filter((item) => item.id !== question.id).concat(question);
+        return { ok: true, name: "PokéAPI" };
+      }).catch(() => ({ ok: false, name: "PokéAPI" }))
+    ]);
+    updateApiStatus(results);
+  }
+
+  function getBestScore() {
+    try { return Number(localStorage.getItem(BEST_KEY)) || 0; } catch (_) { return 0; }
+  }
+
+  function updateBestScore() {
+    $("best-score").innerHTML = getBestScore() + " <small>/ 700</small>";
+  }
+
+  function startGame() {
+    window.clearInterval(timerId);
+    activeQuestions = shuffle(questionPool).slice(0, ROUND_LENGTH);
+    if (activeQuestions.length < ROUND_LENGTH) {
+      activeQuestions = shuffle(BUILTIN_QUESTIONS).slice(0, ROUND_LENGTH);
+    }
+    currentIndex = 0;
+    currentResults = [];
+    totalScore = 0;
+    locked = false;
+    $("live-score").textContent = "0";
+    showScreen("game");
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    window.clearInterval(timerId);
+    currentQuestion = activeQuestions[currentIndex];
+    locked = false;
+    remaining = ROUND_SECONDS;
+    $("question-number").textContent = String(currentIndex + 1).padStart(2, "0");
+    $("question-index").textContent = String(currentIndex + 1).padStart(2, "0");
+    $("progress-fill").style.width = (((currentIndex + 1) / ROUND_LENGTH) * 100) + "%";
+    $("question-category").textContent = currentQuestion.category;
+    $("question-title").textContent = currentQuestion.title;
+    $("question-subtitle").textContent = currentQuestion.subtitle;
+    $("time-left").textContent = String(remaining);
+    $("timer-fill").style.width = "100%";
+    $("timer-fill").classList.remove("warning");
+    $("answer-input").value = "";
+    $("answer-input").disabled = false;
+    $("submit-button").disabled = false;
+    $("skip-button").hidden = false;
+    $("continue-button").hidden = true;
+    $("feedback").hidden = true;
+    $("feedback").className = "feedback";
+    $("answer-input").focus({ preventScroll: true });
+    timerId = window.setInterval(tick, 1000);
+  }
+
+  function tick() {
+    if (locked) return;
+    remaining -= 1;
+    $("time-left").textContent = String(Math.max(remaining, 0));
+    $("timer-fill").style.width = Math.max(0, (remaining / ROUND_SECONDS) * 100) + "%";
+    if (remaining <= 7) $("timer-fill").classList.add("warning");
+    if (remaining <= 0) {
+      window.clearInterval(timerId);
+      finishQuestion(null, "tempo");
+    }
+  }
+
+  function findAnswer(value) {
+    const key = normalise(value);
+    if (!key) return null;
+    return currentQuestion.answers.find((answer) =>
+      answer.aliases.some((alias) => normalise(alias) === key)
+    ) || null;
+  }
+
+  function showFeedback(message, type) {
+    const feedback = $("feedback");
+    feedback.textContent = message;
+    feedback.className = "feedback " + type;
+    feedback.hidden = false;
+  }
+
+  function submitAnswer(event) {
+    if (event) event.preventDefault();
+    if (locked) return;
+    const value = $("answer-input").value.trim();
+    if (!value) {
+      showFeedback("Escreve uma resposta antes de confirmar.", "error");
+      $("answer-input").focus();
+      return;
+    }
+    const answer = findAnswer(value);
+    if (!answer) {
+      showFeedback("Ainda não reconhecemos essa resposta. Experimenta outra — o tempo continua a contar.", "error");
+      $("answer-input").select();
+      return;
+    }
+    finishQuestion(answer, "valid");
+  }
+
+  function finishQuestion(answer, reason) {
+    if (locked) return;
+    locked = true;
+    window.clearInterval(timerId);
+    const points = answer ? answer.points : 0;
+    totalScore += points;
+    currentResults.push({
+      question: currentQuestion,
+      answer: answer ? answer.name : null,
+      points: points,
+      tier: answer ? tierName(points) : "Sem pontos",
+      reason: reason
+    });
+    $("live-score").textContent = String(totalScore);
+    $("answer-input").disabled = true;
+    $("submit-button").disabled = true;
+    $("skip-button").hidden = true;
+    $("continue-button").hidden = false;
+    if (answer) {
+      showFeedback("Resposta aceite: " + answer.name + " · " + tierName(points) + " · +" + points + " pontos.", "success");
+    } else if (reason === "tempo") {
+      showFeedback("O tempo terminou. Esta pergunta valeu 0 pontos.", "neutral");
+    } else {
+      showFeedback("Pergunta passada. Ficaste com 0 pontos nesta ronda.", "neutral");
+    }
+    $("continue-button").focus({ preventScroll: true });
+  }
+
+  function continueGame() {
+    if (!locked) return;
+    if (currentIndex + 1 >= ROUND_LENGTH) {
+      finishGame();
+      return;
+    }
+    currentIndex += 1;
+    renderQuestion();
+  }
+
+  function finishGame() {
+    window.clearInterval(timerId);
+    const previousBest = getBestScore();
+    if (totalScore > previousBest) {
+      try { localStorage.setItem(BEST_KEY, String(totalScore)); } catch (_) {}
+    }
+    updateBestScore();
+    renderResults(totalScore > previousBest);
+    showScreen("results");
+  }
+
+  function resultMessage(score) {
+    if (score === 700) return ["Lenda do abismo.", "Sete respostas lendárias. É difícil fazer melhor do que isto."];
+    if (score >= 560) return ["Mergulho impressionante.", "Encontraste respostas que não aparecem à primeira na cabeça da maioria."];
+    if (score >= 400) return ["Boa exploração.", "Já sabes fugir ao óbvio. Ainda há mais profundidade para descobrir."];
+    if (score >= 250) return ["Bom começo.", "Tens algumas respostas interessantes. Na próxima ronda, arrisca um pouco mais."];
+    if (score > 0) return ["Ainda à superfície.", "O segredo está em pensar numa resposta válida menos previsível."];
+    return ["Mergulho em branco.", "A próxima ronda é uma nova oportunidade para encontrar respostas raras."];
+  }
+
+  function renderResults(newRecord) {
+    $("final-score").textContent = String(totalScore);
+    $("final-depth").textContent = (totalScore * 10).toLocaleString("pt-PT");
+    $("depth-meter-fill").style.width = (totalScore / 700 * 100) + "%";
+    const message = resultMessage(totalScore);
+    $("result-title").textContent = message[0];
+    $("result-description").textContent = message[1] + (newRecord ? " Novo recorde pessoal!" : "");
+    $("result-date").textContent = new Date().toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
+
+    const list = $("review-list");
+    list.replaceChildren();
+    currentResults.forEach((item, index) => {
+      const row = document.createElement("article");
+      row.className = "review-row";
+
+      const number = document.createElement("span");
+      number.className = "review-index";
+      number.textContent = String(index + 1).padStart(2, "0");
+
+      const content = document.createElement("div");
+      content.className = "review-content";
+      const question = document.createElement("div");
+      question.className = "review-question";
+      question.textContent = item.question.title;
+      const answer = document.createElement("div");
+      answer.className = "review-answer";
+      if (item.answer) {
+        answer.textContent = "Resposta: " + item.answer + " · " + item.tier;
+      } else {
+        answer.textContent = item.reason === "tempo" ? "Tempo esgotado · Sem resposta válida" : "Pergunta passada · Sem resposta";
+      }
+      content.append(question, answer);
+
+      const score = document.createElement("div");
+      score.className = "review-score" + (item.points === 0 ? " zero" : "");
+      const scoreValue = document.createElement("strong");
+      scoreValue.textContent = "+" + item.points;
+      const scoreTier = document.createElement("span");
+      scoreTier.textContent = item.tier;
+      score.append(scoreValue, scoreTier);
+
+      row.append(number, content, score);
+      list.append(row);
+    });
+  }
+
+  function showToast(message) {
+    const toast = $("toast");
+    toast.textContent = message;
+    toast.classList.add("show");
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => toast.classList.remove("show"), 2200);
+  }
+
+  function goHome() {
+    window.clearInterval(timerId);
+    showScreen("home");
+    updateBestScore();
+  }
+
+  $("start-button").addEventListener("click", startGame);
+  $("answer-form").addEventListener("submit", submitAnswer);
+  $("skip-button").addEventListener("click", () => finishQuestion(null, "skip"));
+  $("continue-button").addEventListener("click", continueGame);
+  $("play-again-button").addEventListener("click", startGame);
+  $("home-button").addEventListener("click", goHome);
+  $("quit-button").addEventListener("click", () => {
+    if (window.confirm("Queres mesmo sair desta ronda? O progresso atual será perdido.")) goHome();
+  });
+  $("brand-home").addEventListener("click", (event) => {
+    event.preventDefault();
+    if (!screens.game.hidden && !locked) {
+      if (window.confirm("Queres sair do jogo atual?")) goHome();
+    } else {
+      goHome();
+    }
+  });
+
+  updateBestScore();
+  loadExternalQuestions();
+})();
