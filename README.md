@@ -58,7 +58,7 @@ Na secção **Oficina do Grillon**, podes criar até 100 categorias pessoais, ed
 Resposta | pontos | alias1, alias2
 ```
 
-Os pontos aceites são 5, 15, 30, 55, 80 e 100. As categorias pessoais aparecem no treino livre, mas não alteram o desafio diário.
+Os pontos aceites são 5, 15, 30, 55, 80 e 100. Cada resposta pode ter até oito aliases. As categorias pessoais aparecem no treino livre, mas não alteram o desafio diário.
 
 Usa **Exportar cópia** para guardar as tuas perguntas, respostas pessoais, preferências, estatísticas e recordes num ficheiro JSON. **Importar cópia** repõe esses dados noutro navegador ou dispositivo. A importação pede confirmação e tenta preservar os dados anteriores caso o armazenamento falhe. Guarda a cópia num local seguro: não existe sincronização automática na cloud.
 
