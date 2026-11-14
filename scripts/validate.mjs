@@ -37,7 +37,9 @@ for (const id of [
   "editor-title", "editor-subtitle", "editor-answers", "editor-question-id",
   "editor-save-button", "editor-cancel-button", "custom-question-list",
   "custom-question-count", "export-data-button", "import-data-button",
-  "import-data-file", "editor-feedback"
+  "import-data-file", "editor-feedback", "theme-select",
+  "stat-daily-streak", "daily-streak-note", "stat-daily-games",
+  "achievement-progress", "achievement-list", "game-history"
 ]) {
   assert.ok(uniqueIds.has(id), "Falta o elemento de interface: " + id);
 }
@@ -51,6 +53,14 @@ assert.match(js, /function loadCustomQuestions\(/, "As perguntas pessoais têm d
 assert.match(js, /function saveQuestionFromEditor\(/, "O editor tem de guardar perguntas.");
 assert.match(js, /function updateCareerStats\(/, "As estatísticas pessoais devem estar ativas.");
 assert.match(js, /function saveDailyResult\(/, "O melhor resultado diário deve ser guardado.");
+assert.match(js, /const GAME_HISTORY_KEY = "grillon.history.v1"/, "O histórico de rondas deve ter armazenamento próprio.");
+assert.match(js, /function renderCareerExtras\(/, "A área de conquistas e histórico deve ser gerada.");
+assert.match(js, /function getDailyStreakSummary\(/, "As sequências diárias devem ser calculadas.");
+assert.match(js, /function applyTheme\(/, "Os temas visuais devem poder ser aplicados.");
+assert.match(js, /gameHistory,/, "As cópias de segurança devem incluir o histórico.");
+assert.match(css, /data-theme="abyss"/, "O tema Abismo deve estar definido.");
+assert.match(css, /data-theme="coral"/, "O tema Coral deve estar definido.");
+assert.match(html, /id="theme-select"/, "O seletor de tema deve existir.");
 assert.match(js, /PREVIEW_SECONDS = 3/, "A pré-visualização da pergunta deve durar 3 segundos.");
 assert.match(js, /const POINTS = \[5, 15, 30, 55, 80, 100\]/, "A escala de raridade deve estar presente.");
 assert.match(js, /async function copyResult\(/, "A partilha do resultado deve funcionar de forma assíncrona.");
@@ -125,6 +135,20 @@ const questionWithConflict = { id: "sample", answers: [{ name: "Cão", points: 5
 conflictingCustomAnswers(questionWithConflict);
 assert.equal(questionWithConflict.answers.length, 1, "Aliases que colidem com respostas existentes devem ser ignorados.");
 
+const sanitizeHistory = new Function("return (" + extractFunction("sanitizeGameHistory").trim() + ")")();
+const cleanHistory = sanitizeHistory([
+  { date: "2026-11-14", mode: "daily", score: 560, maxScore: 700, questionCount: 7, completedAt: "2026-11-14T12:00:00.000Z" },
+  { date: "not-a-date", mode: "daily", score: 100, maxScore: 700, questionCount: 7 },
+  { date: "2026-11-14", mode: "other", score: 100, maxScore: 700, questionCount: 7 }
+]);
+assert.equal(cleanHistory.length, 1, "O histórico deve rejeitar registos com datas ou modos inválidos.");
+assert.equal(cleanHistory[0].percent, 80, "A percentagem do histórico deve ser calculada a partir da pontuação.");
+const dateKeyOffset = new Function("return (" + extractFunction("dateKeyOffset").trim() + ")")();
+assert.equal(dateKeyOffset("2026-03-01", -1), "2026-02-28", "A sequência diária deve atravessar corretamente mudanças de mês.");
+const getDailyStreakSummary = new Function("dateKeyOffset", "return (" + extractFunction("getDailyStreakSummary").trim() + ")")(dateKeyOffset);
+const streakHistory = ["2026-11-12", "2026-11-13", "2026-11-14"].map((date) => ({ mode: "daily", date }));
+assert.deepEqual(getDailyStreakSummary(streakHistory, "2026-11-14"), { current: 3, best: 3, completed: 3 });
+assert.deepEqual(getDailyStreakSummary(streakHistory, "2026-11-16"), { current: 0, best: 3, completed: 3 });
 const hashSeed = new Function("return (" + extractFunction("hashSeed").trim() + ")")();
 const shuffleSource = extractFunction("seededShuffle");
 const seededShuffle = new Function("hashSeed", "return (" + shuffleSource.trim() + ")")(hashSeed);
@@ -141,3 +165,4 @@ console.log("- Estrutura, sintaxe e referências HTML/JavaScript verificadas.");
 console.log("- Editor de perguntas e validação do banco pessoal testados.");
 console.log("- Exportação/importação de cópias e isolamento do desafio diário verificados.");
 console.log("- Sorteio diário, normalização e níveis de raridade testados.");
+console.log("- Histórico, sequência diária, conquistas e temas visuais verificados.");
