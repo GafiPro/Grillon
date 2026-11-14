@@ -552,6 +552,7 @@
     $("mission-question-count").textContent = String(actual).padStart(2, "0");
     $("mission-time-count").textContent = String(time);
     $("mission-max-score").textContent = String(actual * 100);
+    $("home-depth-max").textContent = (actual * 1000).toLocaleString("pt-PT") + " m";
     const hint = $("setup-hint");
     hint.classList.toggle("warning", selected.length > 0 && selected.length < requested);
     if (selected.length === 0) {
@@ -597,6 +598,71 @@
   function updateBestScore() {
     $("best-score").innerHTML = getBestPercent() + "<small>%</small>";
   }
+
+  function loadCareerStats() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(CAREER_STATS_KEY) || "null");
+      if (saved && typeof saved === "object") {
+        careerStats = {
+          games: Math.max(0, Number(saved.games) || 0),
+          percentTotal: Math.max(0, Number(saved.percentTotal) || 0),
+          rareAnswers: Math.max(0, Number(saved.rareAnswers) || 0)
+        };
+      }
+    } catch (_) {}
+  }
+
+  function saveCareerStats() {
+    try { localStorage.setItem(CAREER_STATS_KEY, JSON.stringify(careerStats)); } catch (_) {}
+  }
+
+  function updateCareerStats() {
+    $("stat-games").textContent = String(careerStats.games);
+    $("stat-average").innerHTML = (careerStats.games ? Math.round(careerStats.percentTotal / careerStats.games) : 0) + "<small>%</small>";
+    $("stat-best").innerHTML = getBestPercent() + "<small>%</small>";
+    $("stat-rare").textContent = String(careerStats.rareAnswers);
+  }
+
+  function recordCareerGame(percent) {
+    careerStats.games += 1;
+    careerStats.percentTotal += percent;
+    careerStats.rareAnswers += currentResults.filter((item) => item.points >= 80).length;
+    saveCareerStats();
+    updateCareerStats();
+  }
+
+  function readDailyBest() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(DAILY_BEST_KEY) || "null");
+      return saved && saved.date === getLisbonDateKey() ? saved : null;
+    } catch (_) { return null; }
+  }
+
+  function updateDailyStatus() {
+    const status = $("daily-status");
+    const record = readDailyBest();
+    if (record) {
+      status.textContent = "Desafio de hoje concluído: " + record.bestScore + "/700 pontos · " + record.plays +
+        (record.plays === 1 ? " tentativa" : " tentativas") + ". Podes voltar a jogar para melhorar.";
+    } else {
+      status.textContent = "Novo desafio todos os dias à meia-noite, hora de Portugal. As sete perguntas são iguais durante todo o dia.";
+    }
+  }
+
+  function saveDailyResult(percent) {
+    const previous = readDailyBest();
+    const score = totalScore;
+    const record = {
+      date: dailyDateKey,
+      bestScore: previous ? Math.max(previous.bestScore, score) : score,
+      bestPercent: previous ? Math.max(previous.bestPercent, percent) : percent,
+      plays: previous ? previous.plays + 1 : 1
+    };
+    try { localStorage.setItem(DAILY_BEST_KEY, JSON.stringify(record)); } catch (_) {}
+    updateDailyStatus();
+    return !previous || score > previous.bestScore;
+  }
+
 
   function startGame() {
     window.clearInterval(timerId);
