@@ -75,13 +75,15 @@ Não existe conta, servidor próprio, leaderboard online ou envio das respostas.
 
 ## Executar localmente
 
-Para testar localmente no Windows, abre um terminal na pasta do projeto e executa:
+Para iniciar no Windows, faz duplo clique em `start-grillon.bat`. O lançador abre o jogo no navegador e inicia um servidor local ligado apenas a `127.0.0.1`. Fecha a janela **Grillon - servidor local** para desligar o servidor.
+
+Também podes iniciar manualmente, dentro da pasta do projeto:
 
 ```powershell
-py -m http.server 8000
+py -m http.server 8000 --bind 127.0.0.1
 ```
 
-Depois abre http://localhost:8000. Também podes usar python -m http.server 8000 se o comando py não estiver disponível. Este método é recomendado para garantir que as APIs externas e o armazenamento local funcionam corretamente.
+Depois abre http://127.0.0.1:8000. Se o comando `py` não estiver disponível, usa `python -m http.server 8000 --bind 127.0.0.1`. Este método é recomendado para garantir que as APIs externas e o armazenamento local funcionam corretamente.
 
 Para GitHub Pages, seleciona a branch main e a pasta raiz nas definições de Pages.
 
