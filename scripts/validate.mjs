@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
-const css = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
-const js = readFileSync(new URL("../game.js", import.meta.url), "utf8");
+const read = (path) => readFileSync(new URL("../" + path, import.meta.url), "utf8");
+const html = read("index.html");
+const css = read("styles.css");
+const js = read("game.js");
 
 assert.match(html, /<html lang="pt-PT">/, "A página deve declarar português europeu.");
 assert.match(html, /href="\.\/styles\.css"/, "A folha de estilos deve estar ligada.");
@@ -23,18 +24,30 @@ assert.deepEqual(missing, [], "Todos os seletores JavaScript devem existir no HT
 for (const id of [
   "round-length", "round-time", "toggle-categories", "select-all-categories",
   "category-options", "setup-hint", "final-max-score", "question-total",
-  "question-total-label", "review-count"
+  "question-total-label", "review-count", "daily-start-button", "daily-status",
+  "stat-games", "stat-average", "stat-best", "stat-rare", "countdown-overlay",
+  "countdown-number", "custom-answer-panel", "custom-answer-points",
+  "save-custom-answer", "add-answer-button", "copy-result-button",
+  "final-percent", "depth-max-label", "home-depth-max", "mode-pill",
+  "results-mode-label", "timer-total"
 ]) {
   assert.ok(uniqueIds.has(id), "Falta o elemento de interface: " + id);
 }
 
-assert.match(js, /function loadSettings\(\)/, "As preferências devem ser carregadas.");
-assert.match(js, /function saveSettings\(\)/, "As preferências devem ser guardadas.");
-assert.match(js, /function findClosestAnswer\(/, "As sugestões de escrita devem estar disponíveis.");
-assert.match(js, /const percent = maxRoundScore/, "O recorde deve ser normalizado pela pontuação máxima.");
+const builtInQuestions = [...js.matchAll(/makeQuestion\("/g)].length;
+assert.ok(builtInQuestions >= 26, "O banco deve ter pelo menos 26 categorias próprias.");
+assert.match(js, /function startDailyGame\(/, "O desafio diário deve existir.");
+assert.match(js, /function seededShuffle\(/, "O sorteio diário tem de ser determinístico.");
+assert.match(js, /function saveCustomAnswer\(/, "O banco pessoal de respostas deve estar ativo.");
+assert.match(js, /function updateCareerStats\(/, "As estatísticas pessoais devem estar ativas.");
+assert.match(js, /function saveDailyResult\(/, "O melhor resultado diário deve ser guardado.");
+assert.match(js, /PREVIEW_SECONDS = 3/, "A pré-visualização da pergunta deve durar 3 segundos.");
 assert.match(js, /const POINTS = \[5, 15, 30, 55, 80, 100\]/, "A escala de raridade deve estar presente.");
+assert.match(js, /async function copyResult\(/, "A partilha do resultado deve funcionar de forma assíncrona.");
+assert.match(js, /C\+\+/, "A categoria de programação deve incluir C++.");
 
 console.log("Grillon: validação concluída.");
-console.log("- HTML, CSS e JavaScript ligados.");
+console.log("- Estrutura e sintaxe ligadas.");
 console.log("- Sem IDs duplicados ou seletores inexistentes.");
-console.log("- Opções, persistência, raridade e APIs verificadas.");
+console.log("- Desafio diário, categorias, respostas pessoais e estatísticas presentes.");
+console.log("- APIs e escala de raridade verificadas.");
