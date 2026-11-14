@@ -63,7 +63,15 @@ Não existe conta, servidor próprio, leaderboard online ou envio das respostas.
 
 ## Executar localmente
 
-Basta abrir index.html num navegador moderno. Para GitHub Pages, seleciona a branch main e a pasta raiz nas definições de Pages.
+Para testar localmente no Windows, abre um terminal na pasta do projeto e executa:
+
+```powershell
+py -m http.server 8000
+```
+
+Depois abre http://localhost:8000. Também podes usar python -m http.server 8000 se o comando py não estiver disponível. Este método é recomendado para garantir que as APIs externas e o armazenamento local funcionam corretamente.
+
+Para GitHub Pages, seleciona a branch main e a pasta raiz nas definições de Pages.
 
 ## Validação
 
