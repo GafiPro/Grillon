@@ -304,7 +304,7 @@
       if (!entry || typeof entry.name !== "string" || !Array.isArray(entry.aliases)) return null;
       const name = entry.name.trim().slice(0, 70);
       const points = Number(entry.points);
-      if (name.length < 2 || !POINTS.includes(points)) return null;
+      if (name.length < 1 || !POINTS.includes(points)) return null;
       const aliases = [name].concat(entry.aliases.filter((alias) => typeof alias === "string").map((alias) => alias.trim().slice(0, 70)).filter(Boolean).slice(0, 8));
       for (const alias of aliases) {
         const key = normalise(alias);
@@ -392,7 +392,7 @@
         errors.push("Linha " + lineNumber + ": usa no máximo três campos separados por |.");
         return;
       }
-      if (name.length < 2 || name.length > 70) {
+      if (name.length < 1 || name.length > 70) {
         errors.push("Linha " + lineNumber + ": a resposta deve ter entre 2 e 70 caracteres.");
         return;
       }
@@ -906,7 +906,7 @@
         if (!entry || typeof entry.name !== "string" || !Array.isArray(entry.aliases)) return;
         const name = entry.name.trim().slice(0, 70);
         const points = Number(entry.points);
-        if (name.length < 2 || !POINTS.includes(points)) return;
+        if (name.length < 1 || !POINTS.includes(points)) return;
         const aliases = [name].concat(entry.aliases.filter((alias) => typeof alias === "string").map((alias) => alias.trim().slice(0, 70)).filter(Boolean).slice(0, 8));
         clean.push({ name, points, aliases });
       });
@@ -1322,7 +1322,7 @@
     if (locked || currentMode === "daily") return;
     const name = $("answer-input").value.trim().slice(0, 70);
     const points = Number($("custom-answer-points").value);
-    if (name.length < 2 || !POINTS.includes(points)) {
+    if (name.length < 1 || !POINTS.includes(points)) {
       showFeedback("Escreve uma resposta válida e escolhe um nível de raridade.", "error");
       return;
     }
