@@ -1110,8 +1110,10 @@
       });
       categorySelection = importedCategories === null ? null : new Set(importedCategories);
       careerStats = safeStats;
+      if (importedQuestions.length && !careerStats.customCreated) careerStats.customCreated = importedQuestions.length;
       gameHistory = importedHistory;
       completedDailyDates = importedDailyDates;
+      saveCareerStats();
       applyTheme(importedTheme);
       $("round-length").value = String(roundLengthValue);
       $("round-time").value = String(roundSecondsValue);
@@ -1157,6 +1159,10 @@
         };
       }
     } catch (_) {}
+    if (customQuestions.length && !careerStats.customCreated) {
+      careerStats.customCreated = customQuestions.length;
+      saveCareerStats();
+    }
   }
 
   function sanitizeGameHistory(entries) {
