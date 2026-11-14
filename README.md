@@ -66,8 +66,8 @@ Usa **Exportar cópia** para guardar as tuas perguntas, respostas pessoais, pref
 
 A área **O teu percurso** acompanha a evolução neste navegador:
 
-- **Sequência diária:** conta os dias consecutivos em que concluíste o desafio diário. O contador mantém a sequência ativa durante o dia seguinte e reinicia quando falhas um dia completo.
-- **Oito conquistas:** desbloqueiam-se ao concluir a primeira ronda, chegar a 80%, encontrar uma resposta lendária, acumular respostas raras, obter 100%, manter uma sequência de três dias, completar dez rondas ou criar uma pergunta.
+- **Sequência diária:** conta os dias consecutivos em que concluíste o desafio diário. O contador mantém a sequência ativa durante o dia seguinte e reinicia quando falhas um dia completo. As datas dos desafios ficam guardadas separadamente do histórico recente.
+- **Oito conquistas:** desbloqueiam-se ao concluir a primeira ronda, chegar a 80%, encontrar uma resposta lendária, acumular respostas raras, obter 100%, manter uma sequência de três dias, completar dez rondas ou criar uma pergunta. As conquistas ficam desbloqueadas de forma permanente.
 - **Histórico:** guarda as últimas 50 rondas e apresenta as cinco mais recentes, com modo, data e percentagem.
 - **Temas visuais:** escolhe entre Oceano, Abismo e Coral no topo da página. A preferência fica guardada.
 
