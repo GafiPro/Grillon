@@ -8,7 +8,7 @@ Um quiz de respostas abertas em que as respostas menos óbvias valem mais pontos
 2. Antes da ronda, escolhe 5, 7 ou 10 perguntas e 15, 25 ou 40 segundos por pergunta.
 3. Abre **Escolher temas** para ativar apenas as categorias que queres. O jogo não repete categorias na mesma ronda; se escolheres menos temas do que perguntas, a ronda ajusta-se ao número de temas.
 4. Escreve uma resposta válida. Respostas mais raras valem mais pontos.
-5. No fim, consulta as respostas, a pontuação e a profundidade. O recorde é guardado como percentagem para comparar rondas de tamanhos diferentes.
+5. No fim, consulta as respostas, a pontuação e a profundidade. O recorde é guardado como percentagem para comparar rondas de tamanhos diferentes. As tuas preferências de perguntas, tempo e temas também ficam guardadas neste navegador.
 
 ## Pontuação
 
@@ -18,7 +18,7 @@ Nas categorias incluídas no projeto, os níveis de raridade são definidos manu
 
 ## Fontes de perguntas
 
-- **Perguntas incluídas:** natureza, comida, futebol, gaming, cinema, motores, personagens, capitais, música, séries, desporto e tecnologia.
+- **Perguntas incluídas:** natureza, comida, clubes e futebolistas, gaming, cinema, motores, personagens, capitais, música, séries, desporto e tecnologia.
 - **REST Countries:** lista de países, nomes alternativos e população.
 - **PokéAPI:** espécies Pokémon, nomes localizados e taxas de captura.
 
