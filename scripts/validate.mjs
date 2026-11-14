@@ -27,7 +27,7 @@ for (const id of [
   "question-total-label", "review-count", "daily-start-button", "daily-status",
   "stat-games", "stat-average", "stat-best", "stat-rare", "countdown-overlay",
   "countdown-number", "custom-answer-panel", "custom-answer-points",
-  "save-custom-answer", "add-answer-button", "copy-result-button",
+  "save-custom-answer", "cancel-custom-answer", "add-answer-button", "copy-result-button",
   "final-percent", "depth-max-label", "home-depth-max", "mode-pill",
   "results-mode-label", "timer-total"
 ]) {
