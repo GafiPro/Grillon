@@ -105,7 +105,7 @@
             <div class="dive-glow"></div>
             <div class="dive-creature">✦</div>
             <div class="dive-depth depth-top">0 m</div>
-            <div class="dive-depth depth-bottom">7 000 m</div>
+            <div class="dive-depth depth-bottom" id="home-depth-max">7 000 m</div>
             <div class="dive-line"></div>
           </div>
           <div class="mission-stats">
@@ -144,7 +144,7 @@
           <div class="career-stat"><span>JOGOS</span><strong id="stat-games">0</strong></div>
           <div class="career-stat"><span>MÉDIA</span><strong id="stat-average">0<small>%</small></strong></div>
           <div class="career-stat"><span>RECORDE</span><strong id="stat-best">0<small>%</small></strong></div>
-          <div class="career-stat"><span>RESPOSTAS ABISSAIS+</span><strong id="stat-rare">0</strong></div>
+          <div class="career-stat"><span>RESPOSTAS 80+ PONTOS</span><strong id="stat-rare">0</strong></div>
         </div>
       </section>
       <footer class="home-footer">
@@ -169,6 +169,7 @@
           </div>
           <div class="question-meta">
             <span class="category-pill" id="question-category">CATEGORIA</span>
+            <span class="mode-pill" id="mode-pill" hidden>DESAFIO DO DIA</span>
             <span class="question-index">PERGUNTA <span id="question-index">01</span> DE <span id="question-total-label">07</span></span>
           </div>
           <h2 id="question-title">Nomeia um animal.</h2>
@@ -227,7 +228,7 @@
     </section>
 
     <section class="screen results-screen" id="results-screen" hidden>
-      <div class="results-topline"><span class="section-eyebrow">FIM DO MERGULHO</span><span class="result-date" id="result-date"></span></div>
+      <div class="results-topline"><span class="section-eyebrow" id="results-mode-label">FIM DO MERGULHO</span><span class="result-date" id="result-date"></span></div>
       <div class="results-hero">
         <div class="result-score-block">
           <span class="result-overline">A TUA PONTUAÇÃO</span>
@@ -240,7 +241,7 @@
           <div class="depth-label">PROFUNDIDADE ATINGIDA</div>
           <div class="depth-number"><strong id="final-depth">0</strong><span>METROS</span></div>
           <div class="depth-meter"><div id="depth-meter-fill"></div></div>
-          <div class="depth-scale"><span>SUPERFÍCIE</span><span>ABISMO</span></div>
+          <div class="depth-scale"><span>SUPERFÍCIE</span><span id="depth-max-label">7 000 M</span></div>
         </div>
       </div>
 
