@@ -7,6 +7,7 @@
   const DEFAULT_ROUND_SECONDS = 25;
   const BEST_KEY = "grillon.best.percent.v2";
   const LEGACY_BEST_KEY = "grillon.best.v1";
+  const SETTINGS_KEY = "grillon.settings.v1";
   const CACHE_COUNTRIES = "grillon.countries.v1";
   const CACHE_POKEMON = "grillon.pokemon.v1";
 
@@ -376,11 +377,12 @@
         if (checkbox.checked) categorySelection.add(question.id);
         else categorySelection.delete(question.id);
         if (categorySelection.size >= questionPool.length) categorySelection = null;
+        saveSettings();
         renderCategoryOptions();
         updateSetupSummary();
       });
       const name = document.createElement("span");
-      const suffix = question.id === "pokemon" ? " · Pokémon" : question.id === "games" ? " · Jogos" : question.id === "countries" ? " · Países" : "";
+      const suffix = question.id === "pokemon" ? " · Pokémon" : question.id === "games" ? " · Jogos" : question.id === "countries" ? " · Países" : question.id === "clubs" ? " · Clubes" : question.id === "footballers" ? " · Jogadores" : "";
       name.textContent = question.category + suffix;
       label.append(checkbox, name);
       container.append(label);
@@ -405,6 +407,26 @@
     } else {
       hint.textContent = "Serão escolhidos " + requested + " temas diferentes, com " + time + " segundos por resposta.";
     }
+  }
+
+  function loadSettings() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null");
+      if (!saved || typeof saved !== "object") return;
+      if ([5, 7, 10].includes(Number(saved.roundLength))) $("round-length").value = String(saved.roundLength);
+      if ([15, 25, 40].includes(Number(saved.roundSeconds))) $("round-time").value = String(saved.roundSeconds);
+      if (Array.isArray(saved.categories)) categorySelection = new Set(saved.categories.filter((id) => typeof id === "string"));
+    } catch (_) {}
+  }
+
+  function saveSettings() {
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+        roundLength: Number($("round-length").value) || DEFAULT_ROUND_LENGTH,
+        roundSeconds: Number($("round-time").value) || DEFAULT_ROUND_SECONDS,
+        categories: categorySelection === null ? null : Array.from(categorySelection)
+      }));
+    } catch (_) {}
   }
 
   function getBestPercent() {
@@ -681,8 +703,8 @@
   }
 
   $("start-button").addEventListener("click", startGame);
-  $("round-length").addEventListener("change", updateSetupSummary);
-  $("round-time").addEventListener("change", updateSetupSummary);
+  $("round-length").addEventListener("change", () => { updateSetupSummary(); saveSettings(); });
+  $("round-time").addEventListener("change", () => { updateSetupSummary(); saveSettings(); });
   $("toggle-categories").addEventListener("click", () => {
     const container = $("category-options");
     container.hidden = !container.hidden;
@@ -690,6 +712,7 @@
   });
   $("select-all-categories").addEventListener("click", () => {
     categorySelection = null;
+    saveSettings();
     renderCategoryOptions();
     updateSetupSummary();
   });
@@ -710,6 +733,7 @@
     }
   });
 
+  loadSettings();
   renderCategoryOptions();
   updateSetupSummary();
   updateBestScore();
