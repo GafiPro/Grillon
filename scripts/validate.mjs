@@ -59,7 +59,7 @@ assert.notEqual(normalise("C"), normalise("C++"), "C e C++ têm de ser respostas
 assert.notEqual(normalise("C"), normalise("C#"), "C e C# têm de ser respostas diferentes.");
 
 const hashSeed = extractFunction("hashSeed");
-const shuffleMatch = js.match(/function\\s+seededShuffle\\s*\\([^)]*\\)\\s*\\{[\\s\\S]*?\\n  \\}/);
+const shuffleMatch = js.match(/function\s+seededShuffle\s*\([^)]*\)\s*\{[\s\S]*?\n  \}/);
 assert.ok(shuffleMatch, "A função seededShuffle deve existir.");
 const seededShuffle = new Function("hashSeed", "return (" + shuffleMatch[0].trim() + ")")(hashSeed);
 const sampleQuestions = Array.from({ length: 26 }, (_, index) => "question-" + index);
