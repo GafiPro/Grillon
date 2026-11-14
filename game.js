@@ -86,6 +86,41 @@
       ["WALL-E", 55, ["walle"]], ["Baymax", 55], ["Samus Aran", 80, ["samus"]],
       ["GLaDOS", 80, ["glados"]], ["Hornet", 100], ["Fawful", 100]
     ])
+
+    makeQuestion("capitals", "Geografia", "Diz o nome de uma capital.", "Pode ser a capital de qualquer país do mundo.", [
+      ["Lisboa", 5, ["lisbon"]], ["Paris", 5], ["Londres", 5, ["london"]], ["Madrid", 15],
+      ["Tóquio", 15, ["tokyo"]], ["Seul", 30, ["seoul"]], ["Brasília", 30, ["brasilia"]],
+      ["Reiquiavique", 55, ["reykjavik"]], ["Wellington", 55], ["Tbilisi", 80],
+      ["Thimphu", 80], ["Skopje", 55], ["Podgorica", 80], ["Funafuti", 100],
+      ["Palikir", 100], ["Ngerulmud", 100]
+    ]),
+    makeQuestion("artists", "Música", "Diz o nome de um artista musical.", "Vale um artista a solo ou um membro conhecido de um grupo.", [
+      ["Taylor Swift", 5], ["Drake", 5], ["The Weeknd", 5], ["Billie Eilish", 5],
+      ["Eminem", 15], ["Kendrick Lamar", 15], ["Travis Scott", 15], ["Juice WRLD", 30],
+      ["d4vd", 30], ["Tyler, the Creator", 30, ["tyler the creator"]], ["Don Toliver", 55],
+      ["JID", 55], ["A$AP Rocky", 55, ["asap rocky"]], ["MF DOOM", 80, ["mf doom"]],
+      ["Yung Lean", 80], ["JPEGMAFIA", 100], ["Quadeca", 100], ["Little Simz", 100]
+    ]),
+    makeQuestion("series", "Televisão", "Diz o nome de uma série.", "Animação, drama, comédia ou ficção científica: qualquer série conta.", [
+      ["Stranger Things", 5], ["Breaking Bad", 5], ["Game of Thrones", 5], ["Wednesday", 15],
+      ["The Boys", 15], ["The Office", 15], ["The Last of Us", 30], ["Arcane", 30],
+      ["Dark", 55], ["Mr. Robot", 55], ["Severance", 55], ["Utopia", 80],
+      ["The OA", 80], ["Scavengers Reign", 100], ["Pantheon", 100], ["Station Eleven", 100]
+    ]),
+    makeQuestion("sports", "Desporto", "Diz o nome de uma modalidade desportiva.", "Vale uma modalidade olímpica ou menos conhecida.", [
+      ["Futebol", 5, ["football", "soccer"]], ["Basquetebol", 5, ["basketball"]], ["Ténis", 5, ["tenis", "tennis"]],
+      ["Voleibol", 15, ["volleyball"]], ["Rugby", 15], ["Críquete", 30, ["cricket"]],
+      ["Andebol", 30, ["handball"]], ["Badminton", 30], ["Esgrima", 55, ["fencing"]],
+      ["Curling", 55], ["Squash", 55], ["Lacrosse", 80], ["Kabaddi", 80],
+      ["Sepak takraw", 100], ["Tchoukball", 100]
+    ]),
+    makeQuestion("tech-brands", "Tecnologia", "Diz o nome de uma marca de tecnologia.", "Pode fabricar computadores, telemóveis, componentes ou periféricos.", [
+      ["Apple", 5], ["Samsung", 5], ["Microsoft", 5], ["Google", 5], ["Sony", 15],
+      ["Nintendo", 15], ["Xiaomi", 15], ["Nvidia", 30], ["Logitech", 30], ["Razer", 30],
+      ["ASUS", 55], ["Acer", 55], ["Valve", 55], ["Framework", 80], ["Fairphone", 80],
+      ["Nothing", 80], ["Wacom", 100], ["Supermicro", 100]
+    ])
+
   ];
 
   let questionPool = BUILTIN_QUESTIONS.slice();
