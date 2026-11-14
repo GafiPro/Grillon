@@ -1334,10 +1334,18 @@
       return;
     }
     const answer = { name: name, points: points, aliases: [name], custom: true };
-    if (!Array.isArray(customAnswerBank[currentQuestion.id])) customAnswerBank[currentQuestion.id] = [];
-    customAnswerBank[currentQuestion.id].push({ name: name, points: points, aliases: [name] });
+    const nextBank = { ...customAnswerBank };
+    const nextEntries = Array.isArray(nextBank[currentQuestion.id]) ? nextBank[currentQuestion.id].slice() : [];
+    nextEntries.push({ name: name, points: points, aliases: [name] });
+    nextBank[currentQuestion.id] = nextEntries;
+    try {
+      localStorage.setItem(CUSTOM_ANSWERS_KEY, JSON.stringify(nextBank));
+    } catch (_) {
+      showFeedback("Não foi possível guardar a resposta no navegador. Liberta espaço e tenta novamente.", "error");
+      return;
+    }
+    customAnswerBank = nextBank;
     currentQuestion.answers.push(answer);
-    try { localStorage.setItem(CUSTOM_ANSWERS_KEY, JSON.stringify(customAnswerBank)); } catch (_) {}
     $("custom-answer-panel").hidden = true;
     $("add-answer-button").hidden = true;
     finishQuestion(answer, "custom");
