@@ -50,6 +50,18 @@ Depois de cada ronda, podes consultar a lista de respostas aceites de cada pergu
 
 O banco não é uma lista universal de todas as respostas possíveis. A normalização ignora acentos, artigos iniciais e pontuação comum, e sugere correções simples. Respostas ambíguas ou que não estejam no banco continuam a precisar de confirmação manual.
 
+## Editor de perguntas e cópias de segurança
+
+Na secção **Oficina do Grillon**, podes criar até 100 categorias pessoais, editar ou apagar cada uma e definir até 100 respostas por pergunta. Introduz uma resposta por linha no formato:
+
+```text
+Resposta | pontos | alias1, alias2
+```
+
+Os pontos aceites são 5, 15, 30, 55, 80 e 100. As categorias pessoais aparecem no treino livre, mas não alteram o desafio diário.
+
+Usa **Exportar cópia** para guardar as tuas perguntas, respostas pessoais, preferências, estatísticas e recordes num ficheiro JSON. **Importar cópia** repõe esses dados noutro navegador ou dispositivo. A importação pede confirmação e tenta preservar os dados anteriores caso o armazenamento falhe. Guarda a cópia num local seguro: não existe sincronização automática na cloud.
+
 ## Estatísticas e privacidade
 
 O Grillon guarda no localStorage do navegador:
