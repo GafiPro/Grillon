@@ -666,6 +666,8 @@
 
   function startGame() {
     window.clearInterval(timerId);
+    window.clearInterval(previewId);
+    currentMode = "practice";
     roundLength = Number($("round-length").value) || DEFAULT_ROUND_LENGTH;
     roundSeconds = Number($("round-time").value) || DEFAULT_ROUND_SECONDS;
     const eligibleQuestions = getEligibleQuestions();
@@ -685,12 +687,35 @@
     $("live-score").textContent = "0";
     $("question-total").textContent = String(activeQuestions.length).padStart(2, "0");
     $("question-total-label").textContent = String(activeQuestions.length).padStart(2, "0");
+    $("mode-pill").hidden = true;
+    showScreen("game");
+    renderQuestion();
+  }
+
+  function startDailyGame() {
+    window.clearInterval(timerId);
+    window.clearInterval(previewId);
+    currentMode = "daily";
+    dailyDateKey = getLisbonDateKey();
+    roundLength = 7;
+    roundSeconds = 25;
+    activeQuestions = seededShuffle(BUILTIN_QUESTIONS, "grillon-daily-v1-" + dailyDateKey).slice(0, 7);
+    maxRoundScore = activeQuestions.length * 100;
+    currentIndex = 0;
+    currentResults = [];
+    totalScore = 0;
+    locked = false;
+    $("live-score").textContent = "0";
+    $("question-total").textContent = "07";
+    $("question-total-label").textContent = "07";
+    $("mode-pill").hidden = false;
     showScreen("game");
     renderQuestion();
   }
 
   function renderQuestion() {
     window.clearInterval(timerId);
+    window.clearInterval(previewId);
     currentQuestion = activeQuestions[currentIndex];
     locked = false;
     remaining = roundSeconds;
@@ -698,6 +723,8 @@
     $("question-index").textContent = String(currentIndex + 1).padStart(2, "0");
     $("progress-fill").style.width = (((currentIndex + 1) / activeQuestions.length) * 100) + "%";
     $("question-category").textContent = currentQuestion.category;
+    $("mode-pill").hidden = currentMode !== "daily";
+    $("mode-pill").textContent = currentMode === "daily" ? "DESAFIO DO DIA" : "TREINO LIVRE";
     $("question-title").textContent = currentQuestion.title;
     $("question-subtitle").textContent = currentQuestion.subtitle;
     $("time-left").textContent = String(remaining);
@@ -705,14 +732,32 @@
     $("timer-fill").style.width = "100%";
     $("timer-fill").classList.remove("warning");
     $("answer-input").value = "";
-    $("answer-input").disabled = false;
-    $("submit-button").disabled = false;
-    $("skip-button").hidden = false;
+    $("answer-input").disabled = true;
+    $("submit-button").disabled = true;
+    $("skip-button").hidden = true;
+    $("add-answer-button").hidden = true;
+    $("custom-answer-panel").hidden = true;
     $("continue-button").hidden = true;
     $("feedback").hidden = true;
     $("feedback").className = "feedback";
-    $("answer-input").focus({ preventScroll: true });
-    timerId = window.setInterval(tick, 1000);
+    $("countdown-overlay").hidden = false;
+    let previewRemaining = PREVIEW_SECONDS;
+    $("countdown-number").textContent = String(previewRemaining);
+    previewId = window.setInterval(() => {
+      previewRemaining -= 1;
+      if (previewRemaining <= 0) {
+        window.clearInterval(previewId);
+        previewId = null;
+        $("countdown-overlay").hidden = true;
+        $("answer-input").disabled = false;
+        $("submit-button").disabled = false;
+        $("skip-button").hidden = false;
+        $("answer-input").focus({ preventScroll: true });
+        timerId = window.setInterval(tick, 1000);
+      } else {
+        $("countdown-number").textContent = String(previewRemaining);
+      }
+    }, 1000);
   }
 
   function tick() {
