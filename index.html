@@ -30,7 +30,7 @@
     <div class="topbar-right">
       <div class="personal-best">
         <span class="best-label">O TEU RECORDE</span>
-        <strong id="best-score">0 <small>/ 700</small></strong>
+        <strong id="best-score">0<small>%</small></strong>
       </div>
       <span class="topbar-divider"></span>
       <span class="edition-label">EDIÇÃO PESSOAL</span>
@@ -53,6 +53,39 @@
             <span class="free-note"><span class="small-check">✓</span> Sem conta. Joga as vezes que quiseres.</span>
           </div>
 
+          <section class="setup-panel" aria-label="Configuração da ronda">
+            <div class="setup-heading">
+              <div><span class="setup-kicker">PERSONALIZA A RONDA</span><strong>Joga à tua maneira</strong></div>
+              <span class="setup-tag">SEM LIMITES</span>
+            </div>
+            <div class="setup-controls">
+              <label class="setup-control">
+                <span>NÚMERO DE PERGUNTAS</span>
+                <select id="round-length">
+                  <option value="5">5 perguntas</option>
+                  <option value="7" selected>7 perguntas</option>
+                  <option value="10">10 perguntas</option>
+                </select>
+              </label>
+              <label class="setup-control">
+                <span>TEMPO POR PERGUNTA</span>
+                <select id="round-time">
+                  <option value="15">15 segundos</option>
+                  <option value="25" selected>25 segundos</option>
+                  <option value="40">40 segundos</option>
+                </select>
+              </label>
+            </div>
+            <div class="topic-toolbar">
+              <button class="topic-toggle" id="toggle-categories" type="button" aria-expanded="false">
+                <span>ESCOLHER TEMAS</span><strong id="selected-category-count">13/13</strong><span class="topic-chevron">⌄</span>
+              </button>
+              <button class="topic-reset" id="select-all-categories" type="button">SELECIONAR TODOS</button>
+            </div>
+            <div class="category-options" id="category-options" hidden></div>
+            <p class="setup-hint" id="setup-hint">Serão escolhidos temas diferentes para cada pergunta.</p>
+          </section>
+
           <div class="api-status" id="api-status">
             <span class="api-pulse"></span>
             <span id="api-status-text">A preparar perguntas extra...</span>
@@ -74,9 +107,9 @@
             <div class="dive-line"></div>
           </div>
           <div class="mission-stats">
-            <div><strong>07</strong><span>PERGUNTAS</span></div>
-            <div><strong>25<span class="stat-unit">s</span></strong><span>POR RESPOSTA</span></div>
-            <div><strong>700</strong><span>PONTOS MÁX.</span></div>
+            <div><strong id="mission-question-count">07</strong><span>PERGUNTAS</span></div>
+            <div><strong><span id="mission-time-count">25</span><span class="stat-unit">s</span></strong><span>POR RESPOSTA</span></div>
+            <div><strong id="mission-max-score">700</strong><span>PONTOS MÁX.</span></div>
           </div>
           <div class="card-footnote"><span class="footnote-icon">↘</span> Quanto mais rara a resposta, mais fundo mergulhas.</div>
         </aside>
@@ -112,7 +145,7 @@
     <section class="screen game-screen" id="game-screen" hidden>
       <div class="game-header">
         <button class="text-button" id="quit-button"><span aria-hidden="true">←</span> SAIR DO JOGO</button>
-        <div class="game-progress-label"><span id="question-number">01</span><span class="muted-slash">/</span>07</div>
+        <div class="game-progress-label"><span id="question-number">01</span><span class="muted-slash">/</span><span id="question-total">07</span></div>
         <div class="score-chip"><span class="score-chip-label">PONTOS</span><strong id="live-score">0</strong></div>
       </div>
 
@@ -122,7 +155,7 @@
         <section class="question-panel">
           <div class="question-meta">
             <span class="category-pill" id="question-category">CATEGORIA</span>
-            <span class="question-index">PERGUNTA <span id="question-index">01</span> DE 07</span>
+            <span class="question-index">PERGUNTA <span id="question-index">01</span> DE <span id="question-total-label">07</span></span>
           </div>
           <h2 id="question-title">Nomeia um animal.</h2>
           <p class="question-hint" id="question-subtitle">Pode ser qualquer um. Escolhe um que não seja demasiado óbvio.</p>
@@ -180,7 +213,7 @@
         </div>
       </div>
 
-      <div class="review-heading"><div><span class="section-eyebrow">RELATÓRIO DA RONDA</span><h3>As tuas respostas</h3></div><span class="review-count">07 PERGUNTAS</span></div>
+      <div class="review-heading"><div><span class="section-eyebrow">RELATÓRIO DA RONDA</span><h3>As tuas respostas</h3></div><span class="review-count" id="review-count">07 PERGUNTAS</span></div>
       <div class="review-list" id="review-list"></div>
       <div class="results-actions">
         <button class="button button-primary" id="play-again-button">JOGAR OUTRA VEZ <span aria-hidden="true">↗</span></button>
