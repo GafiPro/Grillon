@@ -1077,6 +1077,7 @@
   }
 
   $("start-button").addEventListener("click", startGame);
+  $("daily-start-button").addEventListener("click", startDailyGame);
   $("round-length").addEventListener("change", () => { updateSetupSummary(); saveSettings(); });
   $("round-time").addEventListener("change", () => { updateSetupSummary(); saveSettings(); });
   $("toggle-categories").addEventListener("click", () => {
@@ -1091,6 +1092,12 @@
     updateSetupSummary();
   });
   $("answer-form").addEventListener("submit", submitAnswer);
+  $("add-answer-button").addEventListener("click", () => {
+    $("custom-answer-panel").hidden = false;
+    $("custom-answer-points").focus();
+  });
+  $("save-custom-answer").addEventListener("click", saveCustomAnswer);
+  $("copy-result-button").addEventListener("click", copyResult);
   $("skip-button").addEventListener("click", () => finishQuestion(null, "skip"));
   $("continue-button").addEventListener("click", continueGame);
   $("play-again-button").addEventListener("click", startGame);
@@ -1108,8 +1115,12 @@
   });
 
   loadSettings();
+  loadCustomAnswers();
+  loadCareerStats();
   renderCategoryOptions();
   updateSetupSummary();
   updateBestScore();
+  updateCareerStats();
+  updateDailyStatus();
   loadExternalQuestions();
 })();
