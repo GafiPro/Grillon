@@ -431,6 +431,10 @@
         errors.push("Linha " + lineNumber + ": cada alias pode ter no máximo 70 caracteres.");
         return;
       }
+      if (aliases.length > 8) {
+        errors.push("Linha " + lineNumber + ": cada resposta pode ter no máximo oito aliases.");
+        return;
+      }
 
       const allAliases = [name].concat(aliases);
       const lineAliases = new Set();
