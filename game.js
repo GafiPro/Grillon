@@ -606,7 +606,7 @@
         const match = entry.url.match(/\/pokemon-species\/(\d+)\/?$/);
         if (match) byId.set(Number(match[1]), entry);
       });
-      const ids = uniqueStrings(POKEMON_IDS.map(String)).map(Number).filter((id) => byId.has(id));
+      const ids = Array.from(new Set(POKEMON_IDS)).filter((id) => byId.has(id));
       const selected = ids.slice(0, 36);
       pokemon = await mapLimit(selected, 6, async (id) => {
         return await fetchJson("https://pokeapi.co/api/v2/pokemon-species/" + id + "/", 12000);
