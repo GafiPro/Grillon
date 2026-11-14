@@ -323,7 +323,12 @@
     } catch (_) { customQuestions = []; }
 
     const existingIds = new Set(questionPool.map((question) => question.id));
-    customQuestions = customQuestions.filter((question) => !existingIds.has(question.id));
+    const seenIds = new Set(existingIds);
+    customQuestions = customQuestions.filter((question) => {
+      if (seenIds.has(question.id)) return false;
+      seenIds.add(question.id);
+      return true;
+    });
     customQuestions.forEach((question) => {
       applyCustomAnswers(question);
       questionPool.push(question);
@@ -401,6 +406,7 @@
       }
 
       const allAliases = [name].concat(aliases);
+      const lineAliases = new Set();
       let duplicate = false;
       for (const alias of allAliases) {
         const key = normalise(alias);
@@ -409,11 +415,12 @@
           duplicate = true;
           break;
         }
-        if (usedAliases.has(key)) {
+        if (usedAliases.has(key) || lineAliases.has(key)) {
           errors.push("Linha " + lineNumber + ": «" + alias + "» repete uma resposta ou alias já usado.");
           duplicate = true;
           break;
         }
+        lineAliases.add(key);
       }
       if (duplicate) return;
 
@@ -1284,7 +1291,7 @@
       const closest = findClosestAnswer(value);
       const suggestion = closest ? " Talvez quisesses escrever " + closest.name + "?" : "";
       showFeedback("Ainda não reconhecemos essa resposta. Experimenta outra — o tempo continua a contar." + suggestion, "error");
-      $("add-answer-button").hidden = false;
+      $("add-answer-button").hidden = currentMode === "daily";
       $("answer-input").select();
       return;
     }
@@ -1292,7 +1299,7 @@
   }
 
   function saveCustomAnswer() {
-    if (locked) return;
+    if (locked || currentMode === "daily") return;
     const name = $("answer-input").value.trim().slice(0, 70);
     const points = Number($("custom-answer-points").value);
     if (name.length < 2 || !POINTS.includes(points)) {
