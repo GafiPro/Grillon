@@ -103,4 +103,11 @@ Para GitHub Pages, seleciona a branch main e a pasta raiz nas definições de Pa
 
 ## Validação
 
-O GitHub Actions executa uma verificação de sintaxe JavaScript e valida a estrutura e os elementos principais do projeto em cada push para main e em pull requests.
+O GitHub Actions executa em cada push para main e em pull requests:
+
+- Verificação de sintaxe JavaScript e validação da estrutura HTML, seletores e funcionalidades principais.
+- Testes de lógica para respostas, raridade, importação, histórico, calendário diário, sequência e conquistas.
+- Teste de execução com DOM simulado para percorrer o arranque, editor, pontuação, resultados, cópias de segurança e desafio diário.
+- Teste de interface em Chromium real, que abre a página, aplica um tema, cria uma pergunta personalizada, joga uma ronda e confirma o resultado.
+
+Estes testes reduzem bastante o risco de regressões, mas não substituem a verificação em todos os navegadores, dispositivos e condições de rede.
