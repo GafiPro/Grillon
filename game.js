@@ -828,7 +828,7 @@
 
   function submitAnswer(event) {
     if (event) event.preventDefault();
-    if (locked) return;
+    if (locked || $("answer-input").disabled) return;
     const value = $("answer-input").value.trim();
     if (!value) {
       showFeedback("Escreve uma resposta antes de confirmar.", "error");
@@ -840,16 +840,44 @@
       const closest = findClosestAnswer(value);
       const suggestion = closest ? " Talvez quisesses escrever " + closest.name + "?" : "";
       showFeedback("Ainda não reconhecemos essa resposta. Experimenta outra — o tempo continua a contar." + suggestion, "error");
+      $("add-answer-button").hidden = false;
       $("answer-input").select();
       return;
     }
     finishQuestion(answer, "valid");
   }
 
+  function saveCustomAnswer() {
+    if (locked) return;
+    const name = $("answer-input").value.trim().slice(0, 70);
+    const points = Number($("custom-answer-points").value);
+    if (name.length < 2 || !POINTS.includes(points)) {
+      showFeedback("Escreve uma resposta válida e escolhe um nível de raridade.", "error");
+      return;
+    }
+    const existing = findAnswer(name);
+    if (existing) {
+      $("custom-answer-panel").hidden = true;
+      $("add-answer-button").hidden = true;
+      finishQuestion(existing, "valid");
+      return;
+    }
+    const answer = { name: name, points: points, aliases: [name], custom: true };
+    if (!Array.isArray(customAnswerBank[currentQuestion.id])) customAnswerBank[currentQuestion.id] = [];
+    customAnswerBank[currentQuestion.id].push({ name: name, points: points, aliases: [name] });
+    currentQuestion.answers.push(answer);
+    try { localStorage.setItem(CUSTOM_ANSWERS_KEY, JSON.stringify(customAnswerBank)); } catch (_) {}
+    $("custom-answer-panel").hidden = true;
+    $("add-answer-button").hidden = true;
+    finishQuestion(answer, "custom");
+  }
+
   function finishQuestion(answer, reason) {
     if (locked) return;
     locked = true;
     window.clearInterval(timerId);
+    window.clearInterval(previewId);
+    $("countdown-overlay").hidden = true;
     const points = answer ? answer.points : 0;
     totalScore += points;
     currentResults.push({
@@ -857,14 +885,19 @@
       answer: answer ? answer.name : null,
       points: points,
       tier: answer ? tierName(points) : "Sem pontos",
+      custom: Boolean(answer && answer.custom),
       reason: reason
     });
     $("live-score").textContent = String(totalScore);
     $("answer-input").disabled = true;
     $("submit-button").disabled = true;
     $("skip-button").hidden = true;
+    $("add-answer-button").hidden = true;
+    $("custom-answer-panel").hidden = true;
     $("continue-button").hidden = false;
-    if (answer) {
+    if (answer && reason === "custom") {
+      showFeedback("Resposta guardada no teu banco pessoal: " + answer.name + " · " + tierName(points) + " · +" + points + " pontos.", "success");
+    } else if (answer) {
       showFeedback("Resposta aceite: " + answer.name + " · " + tierName(points) + " · +" + points + " pontos.", "success");
     } else if (reason === "tempo") {
       showFeedback("O tempo terminou. Esta pergunta valeu 0 pontos.", "neutral");
