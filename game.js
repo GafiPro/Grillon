@@ -712,6 +712,322 @@
     } catch (_) {}
   }
 
+  function setEditorFeedback(message, isError) {
+    const element = $("editor-feedback");
+    element.textContent = message;
+    element.classList.toggle("error", Boolean(isError));
+    element.classList.toggle("success", Boolean(message) && !isError);
+  }
+
+  function resetQuestionEditor() {
+    $("custom-question-form").reset();
+    $("editor-question-id").value = "";
+    editingQuestionId = "";
+    $("editor-save-button").textContent = "GUARDAR PERGUNTA +";
+    $("editor-cancel-button").hidden = true;
+    setEditorFeedback("", false);
+  }
+
+  function renderCustomQuestionList() {
+    const container = $("custom-question-list");
+    container.replaceChildren();
+    $("custom-question-count").textContent = customQuestions.length + (customQuestions.length === 1 ? " pergunta" : " perguntas");
+
+    if (customQuestions.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "empty-library";
+      empty.textContent = "Ainda não criaste perguntas personalizadas.";
+      container.append(empty);
+      return;
+    }
+
+    customQuestions.forEach((question) => {
+      const item = document.createElement("article");
+      item.className = "custom-question-item";
+
+      const summary = document.createElement("div");
+      summary.className = "custom-question-summary";
+      const category = document.createElement("strong");
+      category.textContent = question.category;
+      const title = document.createElement("span");
+      title.textContent = question.title;
+      const count = document.createElement("small");
+      count.textContent = question.answers.length + " respostas aceites";
+      summary.append(category, title, count);
+
+      const actions = document.createElement("div");
+      actions.className = "custom-question-actions";
+
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "text-button";
+      edit.textContent = "EDITAR";
+      edit.addEventListener("click", () => editCustomQuestion(question.id));
+
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "text-button danger-button";
+      remove.textContent = "APAGAR";
+      remove.addEventListener("click", () => deleteCustomQuestion(question.id));
+
+      actions.append(edit, remove);
+      item.append(summary, actions);
+      container.append(item);
+    });
+  }
+
+  function editCustomQuestion(id) {
+    const question = customQuestions.find((item) => item.id === id);
+    if (!question) return;
+    editingQuestionId = id;
+    $("editor-question-id").value = id;
+    $("editor-category").value = question.category;
+    $("editor-title").value = question.title;
+    $("editor-subtitle").value = question.subtitle;
+    $("editor-answers").value = question.answers.map((answer) => {
+      const aliases = answer.aliases.filter((alias) => normalise(alias) !== normalise(answer.name));
+      return answer.name + " | " + answer.points + (aliases.length ? " | " + aliases.join(", ") : "");
+    }).join("\n");
+    $("editor-save-button").textContent = "GUARDAR ALTERAÇÕES";
+    $("editor-cancel-button").hidden = false;
+    setEditorFeedback("A editar: " + question.category, false);
+    $("custom-question-form").scrollIntoView({ behavior: "smooth", block: "center" });
+    $("editor-category").focus({ preventScroll: true });
+  }
+
+  function deleteCustomQuestion(id) {
+    const question = customQuestions.find((item) => item.id === id);
+    if (!question || !window.confirm("Apagar a categoria «" + question.category + "» e as respetivas respostas?")) return;
+
+    const nextQuestions = customQuestions.filter((item) => item.id !== id);
+    try {
+      localStorage.setItem(CUSTOM_QUESTIONS_KEY, JSON.stringify(nextQuestions));
+    } catch (_) {
+      showToast("Não foi possível atualizar o banco pessoal.");
+      return;
+    }
+
+    customQuestions = nextQuestions;
+    questionPool = questionPool.filter((item) => item.id !== id);
+    if (categorySelection !== null) categorySelection.delete(id);
+    delete customAnswerBank[id];
+    try { localStorage.setItem(CUSTOM_ANSWERS_KEY, JSON.stringify(customAnswerBank)); } catch (_) {}
+    if (editingQuestionId === id) resetQuestionEditor();
+    saveSettings();
+    renderCustomQuestionList();
+    renderCategoryOptions();
+    updateSetupSummary();
+    showToast("Categoria apagada.");
+  }
+
+  function saveQuestionFromEditor(event) {
+    event.preventDefault();
+    const category = $("editor-category").value.trim();
+    const title = $("editor-title").value.trim();
+    const subtitle = $("editor-subtitle").value.trim();
+    const parsed = parseAnswerLines($("editor-answers").value);
+
+    if (category.length < 2 || title.length < 5) {
+      setEditorFeedback("Indica uma categoria e uma pergunta com pelo menos 5 caracteres.", true);
+      return;
+    }
+    if (parsed.errors.length) {
+      setEditorFeedback(parsed.errors.slice(0, 3).join(" "), true);
+      return;
+    }
+
+    const existing = editingQuestionId ? customQuestions.find((item) => item.id === editingQuestionId) : null;
+    if (editingQuestionId && !existing) {
+      resetQuestionEditor();
+      setEditorFeedback("A pergunta que estavas a editar já não existe. Cria uma nova.", true);
+      return;
+    }
+    if (!existing && customQuestions.length >= 100) {
+      setEditorFeedback("O banco pessoal chegou ao limite de 100 perguntas.", true);
+      return;
+    }
+
+    let id = editingQuestionId;
+    if (!id) {
+      const slug = normalise(category).slice(0, 30) || "categoria";
+      const base = "custom-" + slug;
+      id = base + "-" + Date.now().toString(36);
+      let suffix = 2;
+      while (questionPool.some((item) => item.id === id)) id = base + "-" + Date.now().toString(36) + "-" + suffix++;
+    }
+
+    const question = {
+      id,
+      category,
+      title,
+      subtitle,
+      source: "Pergunta pessoal",
+      answers: parsed.answers.map((answer) => ({
+        name: answer.name, points: answer.points, aliases: answer.aliases.slice(), custom: true
+      }))
+    };
+
+    const nextQuestions = existing
+      ? customQuestions.map((item) => item.id === id ? question : item)
+      : customQuestions.concat(question);
+
+    try {
+      localStorage.setItem(CUSTOM_QUESTIONS_KEY, JSON.stringify(nextQuestions));
+    } catch (_) {
+      setEditorFeedback("Não foi possível guardar. O armazenamento do navegador pode estar cheio.", true);
+      return;
+    }
+
+    customQuestions = nextQuestions;
+    questionPool = questionPool.filter((item) => item.id !== id);
+    questionPool.push(question);
+    renderCategoryOptions();
+    renderCustomQuestionList();
+    updateSetupSummary();
+    resetQuestionEditor();
+    setEditorFeedback(existing ? "Pergunta atualizada com sucesso." : "Pergunta criada com sucesso.", false);
+    showToast(existing ? "Pergunta atualizada." : "Nova categoria adicionada ao treino.");
+  }
+
+  function sanitizeCustomAnswerBank(input) {
+    const output = {};
+    if (!input || typeof input !== "object" || Array.isArray(input)) return output;
+    Object.entries(input).slice(0, 150).forEach(([id, entries]) => {
+      if (typeof id !== "string" || !Array.isArray(entries)) return;
+      const clean = [];
+      entries.slice(0, 100).forEach((entry) => {
+        if (!entry || typeof entry.name !== "string" || !Array.isArray(entry.aliases)) return;
+        const name = entry.name.trim().slice(0, 70);
+        const points = Number(entry.points);
+        if (name.length < 2 || !POINTS.includes(points)) return;
+        const aliases = [name].concat(entry.aliases.filter((alias) => typeof alias === "string").map((alias) => alias.trim().slice(0, 70)).filter(Boolean).slice(0, 8));
+        clean.push({ name, points, aliases });
+      });
+      if (clean.length) output[id.slice(0, 90)] = clean;
+    });
+    return output;
+  }
+
+  function createBackup() {
+    return {
+      app: "Grillon",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      data: {
+        settings: {
+          roundLength: Number($("round-length").value) || DEFAULT_ROUND_LENGTH,
+          roundSeconds: Number($("round-time").value) || DEFAULT_ROUND_SECONDS,
+          categories: categorySelection === null ? null : Array.from(categorySelection)
+        },
+        customQuestions,
+        customAnswers: customAnswerBank,
+        careerStats,
+        bestPercent: getBestPercent(),
+        dailyBest: readDailyBest()
+      }
+    };
+  }
+
+  function exportBackup() {
+    try {
+      const backup = createBackup();
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "grillon-backup-" + getLisbonDateKey() + ".json";
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast("Cópia de segurança exportada.");
+    } catch (_) {
+      showToast("Não foi possível criar a cópia de segurança.");
+    }
+  }
+
+  async function importBackup(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    event.target.value = "";
+
+    if (file.size > 2 * 1024 * 1024) {
+      showToast("O ficheiro é demasiado grande (máximo: 2 MB).");
+      return;
+    }
+
+    try {
+      const backup = JSON.parse(await file.text());
+      if (!backup || backup.app !== "Grillon" || backup.version !== 1 || !backup.data || typeof backup.data !== "object") {
+        throw new Error("Formato de cópia de segurança não reconhecido.");
+      }
+
+      const data = backup.data;
+      const importedQuestions = Array.isArray(data.customQuestions)
+        ? data.customQuestions.map(sanitizeCustomQuestion).filter(Boolean).slice(0, 100)
+        : [];
+      const importedAnswers = sanitizeCustomAnswerBank(data.customAnswers);
+      const importedSettings = data.settings && typeof data.settings === "object" ? data.settings : {};
+      const roundLengthValue = [5, 7, 10].includes(Number(importedSettings.roundLength)) ? Number(importedSettings.roundLength) : DEFAULT_ROUND_LENGTH;
+      const roundSecondsValue = [15, 25, 40].includes(Number(importedSettings.roundSeconds)) ? Number(importedSettings.roundSeconds) : DEFAULT_ROUND_SECONDS;
+      const importedCategories = Array.isArray(importedSettings.categories)
+        ? importedSettings.categories.filter((id) => typeof id === "string").slice(0, 150)
+        : null;
+      const stats = data.careerStats && typeof data.careerStats === "object" ? data.careerStats : {};
+      const safeStats = {
+        games: Math.max(0, Math.min(1000000, Number(stats.games) || 0)),
+        percentTotal: Math.max(0, Math.min(100000000, Number(stats.percentTotal) || 0)),
+        rareAnswers: Math.max(0, Math.min(10000000, Number(stats.rareAnswers) || 0))
+      };
+      const safeBest = Math.max(0, Math.min(100, Number(data.bestPercent) || 0));
+      let safeDaily = null;
+      if (data.dailyBest && typeof data.dailyBest.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(data.dailyBest.date)) {
+        safeDaily = {
+          date: data.dailyBest.date,
+          bestScore: Math.max(0, Math.min(700, Number(data.dailyBest.bestScore) || 0)),
+          bestPercent: Math.max(0, Math.min(100, Number(data.dailyBest.bestPercent) || 0)),
+          plays: Math.max(0, Math.min(100000, Number(data.dailyBest.plays) || 0))
+        };
+      }
+
+      localStorage.setItem(CUSTOM_QUESTIONS_KEY, JSON.stringify(importedQuestions));
+      localStorage.setItem(CUSTOM_ANSWERS_KEY, JSON.stringify(importedAnswers));
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+        roundLength: roundLengthValue,
+        roundSeconds: roundSecondsValue,
+        categories: importedCategories
+      }));
+      localStorage.setItem(CAREER_STATS_KEY, JSON.stringify(safeStats));
+      localStorage.setItem(BEST_KEY, String(safeBest));
+      if (safeDaily) localStorage.setItem(DAILY_BEST_KEY, JSON.stringify(safeDaily));
+      else localStorage.removeItem(DAILY_BEST_KEY);
+
+      questionPool = BUILTIN_QUESTIONS.map(cloneQuestion);
+      customAnswerBank = importedAnswers;
+      questionPool.forEach(applyCustomAnswers);
+      customQuestions = importedQuestions;
+      customQuestions.forEach((question) => {
+        applyCustomAnswers(question);
+        questionPool.push(question);
+      });
+      categorySelection = importedCategories === null ? null : new Set(importedCategories);
+      careerStats = safeStats;
+      $("round-length").value = String(roundLengthValue);
+      $("round-time").value = String(roundSecondsValue);
+      saveSettings();
+      renderCategoryOptions();
+      renderCustomQuestionList();
+      updateSetupSummary();
+      updateBestScore();
+      updateCareerStats();
+      updateDailyStatus();
+      loadExternalQuestions();
+      showToast("Cópia de segurança importada com sucesso.");
+    } catch (error) {
+      showToast(error && error.message ? error.message : "Não foi possível importar a cópia.");
+    }
+  }
+
   function getBestPercent() {
     try {
       const saved = localStorage.getItem(BEST_KEY);
