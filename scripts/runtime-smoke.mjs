@@ -262,6 +262,11 @@ const onlyCategory = (wantedId) => {
       label.children[0].dispatch("change");
     }
   }
+  const target = elements.get("category-options").children.find((node) => node.children[0].value === wantedId);
+  if (!target.children[0].checked) {
+    target.children[0].checked = true;
+    target.children[0].dispatch("change");
+  }
   assert.equal(elements.get("selected-category-count").textContent, "1/" + elements.get("category-options").children.length);
 };
 
