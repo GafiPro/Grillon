@@ -968,6 +968,7 @@
       if (!backup || backup.app !== "Grillon" || backup.version !== 1 || !backup.data || typeof backup.data !== "object") {
         throw new Error("Formato de cópia de segurança não reconhecido.");
       }
+      if (!window.confirm("Importar esta cópia substitui as perguntas pessoais, preferências e estatísticas guardadas neste navegador. Continuar?")) return;
 
       const data = backup.data;
       const importedQuestionMap = new Map();
@@ -1004,17 +1005,29 @@
         };
       }
 
-      localStorage.setItem(CUSTOM_QUESTIONS_KEY, JSON.stringify(importedQuestions));
-      localStorage.setItem(CUSTOM_ANSWERS_KEY, JSON.stringify(importedAnswers));
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify({
-        roundLength: roundLengthValue,
-        roundSeconds: roundSecondsValue,
-        categories: importedCategories
-      }));
-      localStorage.setItem(CAREER_STATS_KEY, JSON.stringify(safeStats));
-      localStorage.setItem(BEST_KEY, String(safeBest));
-      if (safeDaily) localStorage.setItem(DAILY_BEST_KEY, JSON.stringify(safeDaily));
-      else localStorage.removeItem(DAILY_BEST_KEY);
+      const backupKeys = [CUSTOM_QUESTIONS_KEY, CUSTOM_ANSWERS_KEY, SETTINGS_KEY, CAREER_STATS_KEY, BEST_KEY, DAILY_BEST_KEY];
+      const previousValues = new Map(backupKeys.map((key) => [key, localStorage.getItem(key)]));
+      try {
+        localStorage.setItem(CUSTOM_QUESTIONS_KEY, JSON.stringify(importedQuestions));
+        localStorage.setItem(CUSTOM_ANSWERS_KEY, JSON.stringify(importedAnswers));
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+          roundLength: roundLengthValue,
+          roundSeconds: roundSecondsValue,
+          categories: importedCategories
+        }));
+        localStorage.setItem(CAREER_STATS_KEY, JSON.stringify(safeStats));
+        localStorage.setItem(BEST_KEY, String(safeBest));
+        if (safeDaily) localStorage.setItem(DAILY_BEST_KEY, JSON.stringify(safeDaily));
+        else localStorage.removeItem(DAILY_BEST_KEY);
+      } catch (storageError) {
+        previousValues.forEach((value, key) => {
+          try {
+            if (value === null) localStorage.removeItem(key);
+            else localStorage.setItem(key, value);
+          } catch (_) {}
+        });
+        throw new Error("Não foi possível guardar todos os dados importados. Os dados anteriores foram repostos.");
+      }
 
       questionPool = BUILTIN_QUESTIONS.map(cloneQuestion);
       customAnswerBank = importedAnswers;
