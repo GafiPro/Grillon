@@ -54,6 +54,8 @@ assert.match(js, /function saveQuestionFromEditor\(/, "O editor tem de guardar p
 assert.match(js, /function updateCareerStats\(/, "As estatísticas pessoais devem estar ativas.");
 assert.match(js, /function saveDailyResult\(/, "O melhor resultado diário deve ser guardado.");
 assert.match(js, /const GAME_HISTORY_KEY = "grillon.history.v1"/, "O histórico de rondas deve ter armazenamento próprio.");
+assert.match(js, /function isValidDateKey\(/, "As datas importadas devem ser datas reais.");
+assert.match(js, /const DAILY_DATES_KEY = "grillon.daily.dates.v1"/, "As datas concluídas devem ser guardadas independentemente do histórico.");
 assert.match(js, /const DAILY_DATES_KEY = "grillon.daily.dates.v1"/, "As datas concluídas devem ser guardadas independentemente do histórico.");
 assert.match(js, /careerStats\.legendaryAnswers \+= legendaryAnswers/, "As conquistas lendárias têm de ficar registadas.");
 assert.match(js, /careerStats\.customCreated \+= 1/, "A criação de perguntas tem de desbloquear a conquista.");
@@ -138,7 +140,10 @@ const questionWithConflict = { id: "sample", answers: [{ name: "Cão", points: 5
 conflictingCustomAnswers(questionWithConflict);
 assert.equal(questionWithConflict.answers.length, 1, "Aliases que colidem com respostas existentes devem ser ignorados.");
 
-const sanitizeHistory = new Function("return (" + extractFunction("sanitizeGameHistory").trim() + ")")();
+const isValidDateKey = new Function("return (" + extractFunction("isValidDateKey").trim() + ")")();
+assert.equal(isValidDateKey("2026-02-28"), true, "Uma data real deve ser aceite.");
+assert.equal(isValidDateKey("2026-02-30"), false, "Uma data impossível deve ser rejeitada.");
+const sanitizeHistory = new Function("isValidDateKey", "return (" + extractFunction("sanitizeGameHistory").trim() + ")")(isValidDateKey);
 const cleanHistory = sanitizeHistory([
   { date: "2026-11-14", mode: "daily", score: 560, maxScore: 700, questionCount: 7, completedAt: "2026-11-14T12:00:00.000Z" },
   { date: "not-a-date", mode: "daily", score: 100, maxScore: 700, questionCount: 7 },
@@ -148,8 +153,8 @@ assert.equal(cleanHistory.length, 1, "O histórico deve rejeitar registos com da
 assert.equal(cleanHistory[0].percent, 80, "A percentagem do histórico deve ser calculada a partir da pontuação.");
 const dateKeyOffset = new Function("return (" + extractFunction("dateKeyOffset").trim() + ")")();
 assert.equal(dateKeyOffset("2026-03-01", -1), "2026-02-28", "A sequência diária deve atravessar corretamente mudanças de mês.");
-const sanitizeDailyDates = new Function("return (" + extractFunction("sanitizeDailyDates").trim() + ")")();
-const cleanDailyDates = sanitizeDailyDates(["2026-11-13", "not-a-date", "2026-11-12", "2026-11-13"]);
+const sanitizeDailyDates = new Function("isValidDateKey", "return (" + extractFunction("sanitizeDailyDates").trim() + ")")(isValidDateKey);
+const cleanDailyDates = sanitizeDailyDates(["2026-11-13", "not-a-date", "2026-11-12", "2026-11-13", "2026-13-40"]);
 assert.deepEqual(cleanDailyDates, ["2026-11-12", "2026-11-13"], "O calendário diário deve remover datas inválidas e duplicadas.");
 const getDailyStreakSummary = new Function("sanitizeDailyDates", "dateKeyOffset", "return (" + extractFunction("getDailyStreakSummary").trim() + ")")(sanitizeDailyDates, dateKeyOffset);
 const streakHistory = ["2026-11-12", "2026-11-13", "2026-11-14"];
