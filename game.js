@@ -640,10 +640,10 @@
     updateCareerStats();
   }
 
-  function readDailyBest() {
+  function readDailyBest(dateKey) {
     try {
       const saved = JSON.parse(localStorage.getItem(DAILY_BEST_KEY) || "null");
-      return saved && saved.date === getLisbonDateKey() ? saved : null;
+      return saved && saved.date === (dateKey || getLisbonDateKey()) ? saved : null;
     } catch (_) { return null; }
   }
 
@@ -659,7 +659,7 @@
   }
 
   function saveDailyResult(percent) {
-    const previous = readDailyBest();
+    const previous = readDailyBest(dailyDateKey);
     const score = totalScore;
     const record = {
       date: dailyDateKey,
@@ -1046,7 +1046,7 @@
     const label = currentMode === "daily" ? "Desafio diário" : "Treino livre";
     const message = "🌊 GRILLON\n" + label + "\nPontuação: " + totalScore + "/" + maxRoundScore +
       " (" + percent + "%)\nProfundidade: " + (totalScore * 10).toLocaleString("pt-PT") +
-      " m\nPerguntas: " + activeQuestions.length + "\nJoga também: https://gafipro.github.io/Grillon/";
+      " m\nPerguntas: " + activeQuestions.length + "\nProjeto: https://github.com/GafiPro/Grillon";
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(message);
@@ -1100,7 +1100,7 @@
   $("copy-result-button").addEventListener("click", copyResult);
   $("skip-button").addEventListener("click", () => finishQuestion(null, "skip"));
   $("continue-button").addEventListener("click", continueGame);
-  $("play-again-button").addEventListener("click", startGame);
+  $("play-again-button").addEventListener("click", () => currentMode === "daily" ? startDailyGame() : startGame());
   $("home-button").addEventListener("click", goHome);
   $("quit-button").addEventListener("click", () => {
     if (window.confirm("Queres mesmo sair desta ronda? O progresso atual será perdido.")) goHome();
