@@ -481,6 +481,7 @@
     $("question-title").textContent = currentQuestion.title;
     $("question-subtitle").textContent = currentQuestion.subtitle;
     $("time-left").textContent = String(remaining);
+    $("timer-total").textContent = roundSeconds + "s";
     $("timer-fill").style.width = "100%";
     $("timer-fill").classList.remove("warning");
     $("answer-input").value = "";
