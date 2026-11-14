@@ -14,7 +14,7 @@
   const DAILY_BEST_KEY = "grillon.daily.best.v1";
   const PREVIEW_SECONDS = 3;
   const CACHE_COUNTRIES = "grillon.countries.v1";
-  const CACHE_POKEMON = "grillon.pokemon.v1";
+  const CACHE_POKEMON = "grillon.pokemon.v2";
 
   const $ = (id) => document.getElementById(id);
   const screens = {
