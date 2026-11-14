@@ -62,14 +62,28 @@ Os pontos aceites são 5, 15, 30, 55, 80 e 100. Cada resposta pode ter até oito
 
 Usa **Exportar cópia** para guardar as tuas perguntas, respostas pessoais, preferências, estatísticas e recordes num ficheiro JSON. **Importar cópia** repõe esses dados noutro navegador ou dispositivo. A importação pede confirmação e tenta preservar os dados anteriores caso o armazenamento falhe. Guarda a cópia num local seguro: não existe sincronização automática na cloud.
 
+## Progressão, conquistas e histórico
+
+A área **O teu percurso** acompanha a evolução neste navegador:
+
+- **Sequência diária:** conta os dias consecutivos em que concluíste o desafio diário. O contador mantém a sequência ativa durante o dia seguinte e reinicia quando falhas um dia completo.
+- **Oito conquistas:** desbloqueiam-se ao concluir a primeira ronda, chegar a 80%, encontrar uma resposta lendária, acumular respostas raras, obter 100%, manter uma sequência de três dias, completar dez rondas ou criar uma pergunta.
+- **Histórico:** guarda as últimas 50 rondas e apresenta as cinco mais recentes, com modo, data e percentagem.
+- **Temas visuais:** escolhe entre Oceano, Abismo e Coral no topo da página. A preferência fica guardada.
+
+As conquistas e as sequências são calculadas a partir das rondas concluídas. As tentativas incompletas ou abandonadas não contam.
+
 ## Estatísticas e privacidade
 
 O Grillon guarda no localStorage do navegador:
 - recorde pessoal e média de pontuação;
 - número de rondas e respostas com 80 ou mais pontos;
-- melhor resultado do desafio diário;
-- preferências de jogo e respostas pessoais adicionadas;
+- melhor resultado do desafio diário e sequência diária;
+- histórico recente e conquistas desbloqueadas;
+- tema visual, preferências de jogo e respostas pessoais adicionadas;
 - cache das APIs.
+
+As cópias de segurança incluem agora o histórico e o tema visual, além das perguntas, respostas, preferências e estatísticas. As cópias antigas continuam a poder ser importadas, mas não contêm o histórico que ainda não existia.
 
 Não existe conta, servidor próprio, leaderboard online ou envio das respostas. Limpar os dados do site no navegador remove estes dados.
 
