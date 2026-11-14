@@ -326,6 +326,17 @@ assert.equal(elements.get("stat-daily-streak").textContent, "1 dia", "A sequênc
 assert.equal(elements.get("stat-daily-games").textContent, "1", "O total de desafios deve aumentar.");
 assert.ok(JSON.parse(localStorage.getItem("grillon.daily.best.v1")), "O melhor resultado diário deve ser guardado.");
 
+// The Pokémon IDs 1, 4 and 7 must survive selection (single-digit IDs are valid).
+onlyCategory("pokemon");
+elements.get("round-length").value = "5";
+elements.get("round-time").value = "15";
+click("start-button");
+assert.equal(elements.get("question-title").textContent, "Diz o nome de um Pokémon.", "A categoria Pokémon deve abrir a pergunta correta.");
+finishPreview();
+answerCurrentQuestion("Espécie 1");
+assert.match(elements.get("feedback").textContent, /100 pontos/, "A primeira espécie deve estar presente no banco de respostas.");
+continueCurrentQuestion();
+
 click("import-data-button");
 const backup = {
   app: "Grillon",
