@@ -28,6 +28,15 @@
       <span class="brand-name">GRILLON<span class="brand-dot">.</span></span>
     </a>
     <div class="topbar-right">
+      <label class="theme-picker" for="theme-select">
+        <span>TEMA</span>
+        <select id="theme-select" aria-label="Escolher tema visual">
+          <option value="ocean">OCEANO</option>
+          <option value="abyss">ABISMO</option>
+          <option value="coral">CORAL</option>
+        </select>
+      </label>
+      <span class="topbar-divider theme-divider"></span>
       <div class="personal-best">
         <span class="best-label">O TEU RECORDE</span>
         <strong id="best-score">0<small>%</small></strong>
@@ -147,6 +156,37 @@
           <div class="career-stat"><span>RECORDE</span><strong id="stat-best">0<small>%</small></strong></div>
           <div class="career-stat"><span>RESPOSTAS 80+ PONTOS</span><strong id="stat-rare">0</strong></div>
         </div>
+
+        <div class="career-insights">
+          <article class="insight-card streak-insight">
+            <div class="insight-top"><span>SEQUÊNCIA DIÁRIA</span><span aria-hidden="true">✦</span></div>
+            <strong id="stat-daily-streak">0 dias</strong>
+            <small id="daily-streak-note">Completa o desafio de hoje para começar.</small>
+          </article>
+          <article class="insight-card">
+            <div class="insight-top"><span>DESAFIOS DIÁRIOS</span><span aria-hidden="true">◷</span></div>
+            <strong id="stat-daily-games">0</strong>
+            <small>Desafios concluídos neste navegador.</small>
+          </article>
+        </div>
+
+        <section class="achievement-section" aria-label="Conquistas">
+          <div class="progress-section-heading">
+            <div><span class="section-eyebrow">MARCO A MARCO</span><h4>Conquistas</h4></div>
+            <span id="achievement-progress">0/8 DESBLOQUEADAS</span>
+          </div>
+          <div class="achievement-grid" id="achievement-list"></div>
+        </section>
+
+        <section class="history-section" aria-label="Histórico de jogos">
+          <div class="progress-section-heading">
+            <div><span class="section-eyebrow">AS TUAS ÚLTIMAS RONDAS</span><h4>Histórico</h4></div>
+            <span>ATÉ 5 RONDAS</span>
+          </div>
+          <div class="history-list" id="game-history">
+            <p class="empty-history">As tuas rondas concluídas vão aparecer aqui.</p>
+          </div>
+        </section>
       </section>
 
       <section class="library-panel" aria-label="Editor de perguntas e cópias de segurança">
