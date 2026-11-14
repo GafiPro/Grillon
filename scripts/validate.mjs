@@ -5,12 +5,15 @@ const read = (path) => readFileSync(new URL("../" + path, import.meta.url), "utf
 const html = read("index.html");
 const css = read("styles.css");
 const js = read("game.js");
+const launcher = read("start-grillon.bat");
 
 assert.match(html, /<html lang="pt-PT">/, "A página deve declarar português europeu.");
 assert.match(html, /href="\.\/styles\.css"/, "A folha de estilos deve estar ligada.");
 assert.match(html, /src="\.\/game\.js"/, "O motor do jogo deve estar ligado.");
 assert.match(css, /:root\s*\{/, "A folha de estilos deve conter as variáveis base.");
 assert.match(css, /\.library-panel/, "O editor pessoal deve ter estilos.");
+assert.match(launcher, /--bind 127\\.0\\.0\\.1/, "O lançador do Windows deve limitar o servidor ao próprio computador.");
+assert.match(launcher, /http:\\/\\/127\\.0\\.0\\.1:%PORT%\\//, "O lançador deve abrir o endereço local.");
 assert.match(js, /https:\/\/restcountries\.com\/v3\.1\/all/, "A integração REST Countries deve existir.");
 assert.match(js, /https:\/\/pokeapi\.co\/api\/v2\/pokemon-species/, "A integração PokéAPI deve existir.");
 
@@ -100,6 +103,27 @@ const cleanQuestion = sanitizeCustomQuestion({
 });
 assert.ok(cleanQuestion, "O importador deve aceitar perguntas pessoais válidas.");
 assert.equal(sanitizeCustomQuestion({ id: "broken", category: "X", title: "Bad", answers: [] }), null, "O importador deve rejeitar perguntas inválidas.");
+
+const cloneQuestion = new Function("return (" + extractFunction("cloneQuestion").trim() + ")")();
+const originalQuestion = { id: "sample", category: "Teste", title: "Teste", subtitle: "", answers: [{ name: "C", points: 5, aliases: ["C"] }] };
+const clonedQuestion = cloneQuestion(originalQuestion);
+clonedQuestion.answers[0].aliases.push("C language");
+assert.deepEqual(originalQuestion.answers[0].aliases, ["C"], "O banco do desafio diário não pode ser alterado pelo banco de treino.");
+
+const applyCustomSource = extractFunction("applyCustomAnswers");
+const applyCustomAnswers = new Function("customAnswerBank", "normalise", "POINTS", "return (" + applyCustomSource.trim() + ")")(
+  { sample: [{ name: "Lobo", points: 80, aliases: ["Lobo", "wolf"] }] }, normalise, POINTS
+);
+const questionWithPersonalAnswer = { id: "sample", answers: [{ name: "Cão", points: 5, aliases: ["Cão", "dog"] }] };
+applyCustomAnswers(questionWithPersonalAnswer);
+assert.equal(questionWithPersonalAnswer.answers.length, 2, "Uma resposta pessoal sem conflitos deve ser carregada.");
+
+const conflictingCustomAnswers = new Function("customAnswerBank", "normalise", "POINTS", "return (" + applyCustomSource.trim() + ")")(
+  { sample: [{ name: "Lobo", points: 80, aliases: ["Lobo", "dog"] }] }, normalise, POINTS
+);
+const questionWithConflict = { id: "sample", answers: [{ name: "Cão", points: 5, aliases: ["Cão", "dog"] }] };
+conflictingCustomAnswers(questionWithConflict);
+assert.equal(questionWithConflict.answers.length, 1, "Aliases que colidem com respostas existentes devem ser ignorados.");
 
 const hashSeed = new Function("return (" + extractFunction("hashSeed").trim() + ")")();
 const shuffleSource = extractFunction("seededShuffle");
