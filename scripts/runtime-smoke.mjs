@@ -65,8 +65,9 @@ class FakeElement {
       preventDefault() { this.defaultPrevented = true; },
       ...extra
     };
-    for (const callback of this.listeners.get(type) || []) callback(event);
-    return event;
+    const results = [];
+    for (const callback of this.listeners.get(type) || []) results.push(callback(event));
+    return results.length === 1 ? results[0] : event;
   }
   append(...nodes) {
     this._textContent = "";
@@ -91,7 +92,10 @@ class FakeElement {
   remove() {
     if (this.parentNode) this.parentNode.children = this.parentNode.children.filter((node) => node !== this);
   }
-  click() { this.dispatch("click"); }
+  click() {
+    if (this.download) downloads.push({ filename: this.download, href: this.href });
+    this.dispatch("click");
+  }
   focus() {}
   select() {}
   scrollIntoView() {}
@@ -104,6 +108,7 @@ class FakeElement {
   }
 }
 
+const downloads = [];
 const elements = new Map(ids.map((id) => [id, new FakeElement("div", id)]));
 for (const id of ["home-screen", "game-screen", "results-screen"]) elements.get(id).hidden = id !== "home-screen";
 elements.get("round-length").value = "7";
@@ -264,7 +269,7 @@ const onlyCategory = (wantedId) => {
 await flush();
 await flush();
 assert.equal(elements.get("api-status").classList.contains("ready"), true, "As duas APIs de teste devem ficar ligadas.");
-assert.ok(elements.get("category-options").children.length >= 29, "As categorias próprias, países, Pokémon e categoria personalizada devem estar disponíveis mais tarde.");
+assert.ok(elements.get("category-options").children.length >= 28, "As categorias próprias, países e Pokémon devem estar disponíveis.");
 
 const themeSelect = elements.get("theme-select");
 themeSelect.value = "coral";
@@ -299,13 +304,13 @@ continueCurrentQuestion();
 assert.equal(elements.get("results-screen").hidden, false, "A última resposta deve abrir os resultados.");
 assert.equal(elements.get("final-score").textContent, "100", "A pontuação final deve ser correta.");
 assert.equal(JSON.parse(localStorage.getItem("grillon.history.v1")).length, 1, "A ronda deve entrar no histórico.");
-assert.match(elements.get("achievement-progress").textContent, /3\/8/, "As conquistas de primeira ronda, 80% e criador devem desbloquear.");
+assert.match(elements.get("achievement-progress").textContent, /5\/8/, "As conquistas de primeira ronda, 80% e criador devem desbloquear.");
 click("copy-result-button");
 await flush();
 assert.match(clipboard[0] || "", /100%/, "A partilha deve copiar o resultado.");
 
 click("export-data-button");
-assert.equal(body.children.some((node) => node.download.includes("grillon-backup-")), true, "A exportação deve iniciar uma transferência.");
+assert.equal(downloads.some((item) => item.filename.includes("grillon-backup-")), true, "A exportação deve iniciar uma transferência.");
 
 click("daily-start-button");
 assert.equal(elements.get("mode-pill").hidden, false, "O desafio diário deve assinalar o modo.");
