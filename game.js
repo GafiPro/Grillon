@@ -1091,6 +1091,7 @@
     $("custom-answer-points").focus();
   });
   $("save-custom-answer").addEventListener("click", saveCustomAnswer);
+  $("cancel-custom-answer").addEventListener("click", () => { $("custom-answer-panel").hidden = true; });
   $("copy-result-button").addEventListener("click", copyResult);
   $("skip-button").addEventListener("click", () => finishQuestion(null, "skip"));
   $("continue-button").addEventListener("click", continueGame);
